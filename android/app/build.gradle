@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.usecinema.game'
+    compileSdk 37
+
+    // 어디서 빌드하든 같은 서명 → 지우지 않고 덮어 설치(업데이트) 가능
+    signingConfigs {
+        cinema {
+            storeFile rootProject.file('moonflo.keystore')
+            storePassword 'moonflo123'
+            keyAlias 'moonflo'
+            keyPassword 'moonflo123'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.cinema }
+    }
+
+    defaultConfig {
+        applicationId 'com.usecinema.game'
+        minSdk 26
+        targetSdk 35
+        versionCode ((int) (System.currentTimeMillis() / 60000L - 29000000L))   // 만든 시각 기준: 새 것이 항상 더 큼
+        versionName '1.0'
+    }
+
+    sourceSets.main.assets.srcDir(file('build/generated/webAssets'))
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
+
+// 게임 파일(web 폴더)을 빌드할 때 그대로 앱 안에 넣습니다.
+def syncWebAssets = tasks.register('syncWebAssets', Sync) {
+    from(rootProject.file('../web'))
+    into(layout.buildDirectory.dir('generated/webAssets'))
+}
+tasks.configureEach {
+    if (name.startsWith('merge') && name.endsWith('Assets')) dependsOn(syncWebAssets)
+}
+
+// 만들어진 앱 파일 이름을 cinema.apk 로도 복사
+tasks.configureEach { t ->
+    if (t.name == 'assembleDebug') t.doLast {
+        def d = layout.buildDirectory.dir('outputs/apk/debug').get().asFile
+        def a = new File(d, 'app-debug.apk')
+        if (a.exists()) java.nio.file.Files.copy(a.toPath(), new File(d, 'cinema.apk').toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+}

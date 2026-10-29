@@ -45,6 +45,7 @@ button:focus-visible,.cut:focus-visible,.in:focus-visible,.pad:focus-visible{out
 .gbar{height:5px;border-radius:3px;background:#3a2a20;overflow:hidden;margin-top:2px;border:1px solid rgba(138,106,40,.7)}
 .gbar i{display:block;height:100%;background:url(a/bar_03.webp) 0 0/100% 100%;transition:width .4s}
 .gbar.dig i{background-image:url(a/bar_04.webp)}
+.bkrow{display:flex;margin-bottom:4px}.bk{font:700 13px var(--f-d);color:var(--lt);background:rgba(20,10,13,.78);border:1px solid var(--gold-d);border-radius:8px;min-height:36px;padding:0 14px;cursor:pointer}.bk:disabled{color:#7a6f66;background:rgba(40,34,36,.6);cursor:not-allowed}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .tab{border-style:solid;border-width:10px;border-image:url(a/plate_06.webp) 26 fill/10px stretch;min-height:40px;display:flex;align-items:center;justify-content:center;font:700 13px var(--f-d);color:var(--ink);opacity:.9}
 .tab.on{border-image-source:url(a/plate_05.webp);color:var(--lt);opacity:1}
@@ -418,14 +419,15 @@ const typesOf=(a,p)=>[...new Set(CUTS.filter(c=>c.actor===a&&c.place===p).map(c=
 const cutsOf=(a,p,t)=>CUTS.filter(c=>c.actor===a&&c.place===p&&(t==null||c.type===t));
 const allPlaces=()=>[...new Set(openCuts().map(c=>c.place))];
 const allTypes=()=>[...new Set(openCuts().map(c=>c.type))].filter(t=>t!=='미분류');
-function handleFolder(files){
+function handleFolder(files){ingestFiles(files.map(f=>({name:f.name||'',type:f.type||'',rel:f.webkitRelativePath||'',mk:()=>URL.createObjectURL(f)})));}
+function ingestFiles(files){
  const re=/^\s*([^()（）]+?)\s*[\(（]\s*([^)）]+?)\s*[\)）]/;
  const arr=[];let skipped=0,tsSkipped=0;CUSTOM_TIER={};const lockTmp={};
  for(const f of files){
   const isVid=/\.(mp4|m4v|webm|mov)$/i.test(f.name||'');
   if(/\.ts$/i.test(f.name||'')){tsSkipped++;continue;}
   if(!isVid&&(!f.type||!f.type.startsWith('image/'))){skipped++;continue;}
-  const p=(f.webkitRelativePath||'').split('/');
+  const p=(f.rel||'').split('/');
   if(p.length<2){skipped++;continue;}
   let idx=-1,m=null;
   for(let i=0;i<p.length-1;i++){const mm=re.exec(p[i]);if(mm){idx=i;m=mm;break;}}
@@ -448,10 +450,10 @@ function handleFolder(files){
   }
   if(aLock)lockTmp[aName]=Math.max(lockTmp[aName]||0,clamp(aLock,1,5));
   const base=p[p.length-1].replace(/\.[^.]+$/,'').toLowerCase();
-  if(base==='portrait'){PORTRAIT[aName]=URL.createObjectURL(f);continue;}
+  if(base==='portrait'){PORTRAIT[aName]=f.mk();continue;}
   const between=p.slice(tIdx,p.length-1);
   const type=between.length?normType(between[0]):'미분류';
-  arr.push({id:p.slice(idStart).join('/'),actor:aName,place,type,no:arr.length+1,kind:isVid?'video':'img',src:URL.createObjectURL(f)});
+  arr.push({id:p.slice(idStart).join('/'),actor:aName,place,type,no:arr.length+1,kind:isVid?'video':'img',src:f.mk()});
  }
  if(!arr.length){R.folderMsg=(tsSkipped?`.ts 영상 ${fmt(tsSkipped)}개는 재생할 수 없어 건너뛰었습니다. MP4로 바꿔 주세요. `:'')+'읽을 수 있는 이미지·영상이 없습니다. 이 기기에서는 폴더 선택이 안 될 수 있어, 가짜 컷으로 진행합니다.';render();return;}
  CUTS=arr;R.realCount=arr.length;
@@ -463,6 +465,12 @@ function handleFolder(files){
  if(R.film)newFilm();
  render();
 }
+
+/* ===== 앱(안드로이드) 폴더 연결 ===== */
+const NB=window.CinemaBridge||null;
+window.onCinemaFolder=json=>{let a=[];try{a=JSON.parse(json);}catch(e){}ingestFiles(a.map(o=>({name:o.n,type:o.t,rel:o.p,mk:()=>o.u})));};
+window.onCinemaReady=()=>{try{window.onCinemaFolder(NB.getList());}catch(e){R.folderMsg='폴더 목록을 받지 못했습니다.';render();}};
+window.onCinemaMsg=m=>{R.folderMsg=m;if(R.screen==='title')render();};
 
 /* ===== 레벨·해금 ===== */
 const A=n=>S.actors[n]||(S.actors[n]={exp:0,uses:{}});
@@ -590,7 +598,7 @@ function header(step){
  <div class="hud"><div class="hp"><span>자금</span><b>₡ ${fmt(S.funds)}</b></div>
  <div class="hp w"><span>${HALLS[S.hall].name}</span><b>제${S.filmNo}작</b></div>
  <div class="hp"><span>감독 Lv.${lv} · 맷집 ${Math.floor(S.hits/12)}</span><div class="gbar" title="감독 경험치"><i style="width:${pct}%"></i></div><div class="gbar dig" title="존엄"><i style="width:${S.dignity}%"></i></div></div></div></div>
- ${step==null?'':`<div class="tabs">${STEPS.map((s,i)=>`<div class="tab ${i===step?'on':''}">${s}</div>`).join('')}</div>`}`;
+ ${step==null?'':`<div class="bkrow"><button class="bk" data-act="goback" ${(backState()||{}).can?'':'disabled'}>‹ 뒤로</button></div><div class="tabs">${STEPS.map((s,i)=>`<div class="tab ${i===step?'on':''}">${s}</div>`).join('')}</div>`}`;
 }
 function judgeList(F){
  return F.judges.map(j=>`<div class="jrow">${jpHTML(j.persona)}<div class="grow"><b style="font-family:var(--f-d)">${esc(j.persona.name)}</b> ${gradeBadge(j.grade)}<div class="small" style="color:var(--ink2)">${esc(hint(j))}</div></div></div>`).join('');
@@ -600,7 +608,7 @@ function judgeList(F){
 function viewTitle(){
  return `<div class="ttl"><div class="hero"><img src="${IM('lobby')}" alt=""><div><div class="sub">USE · PRIVATE CINEMA</div><h1>무삭제<br>시네마 제작소</h1></div></div>
  <div class="btns"><button class="pl gold wide" data-act="cont" ${hasSave?'':'disabled'}>이어하기</button><button class="pl cream wide" data-act="new">새로 시작</button></div>
- <div style="text-align:center"><button class="link" data-act="folder">폴더 불러오기</button><div class="small mut">${esc(R.folderMsg||'')}</div></div></div>`;
+ <div style="text-align:center">${NB?`<button class="link" data-act="folderPick">${NB.hasFolder()?'그림 폴더 바꾸기':'그림 폴더 지정'}</button>${NB.hasFolder()?' <button class="link" data-act="folderScan">다시 읽기</button>':''}`:`<button class="link" data-act="folder">폴더 불러오기</button>`}<div class="small mut">${esc(R.folderMsg||'')}</div></div></div>`;
 }
 
 /* ===== 화면: 기획 ===== */
@@ -1045,6 +1053,19 @@ function render(){
  if(sc==='penPlay')runPenalty();
 }
 function go(sc){R.screen=sc;render();}
+function backState(){
+ if(R.faceFor)return {can:true,fn:()=>{R.faceFor=null;render();}};
+ switch(R.screen){
+  case 'title':return null;
+  case 'plan':return {can:true,fn:()=>go('title')};
+  case 'script':return {can:true,fn:()=>go('plan')};
+  case 'edit':return {can:true,fn:()=>go('shoot')};
+  case 'shoot':return {can:false,msg:'촬영을 마친 작품은 되돌릴 수 없습니다.'};
+  case 'show':return {can:false,msg:'시사회가 진행 중입니다.'};
+  default:return {can:false,msg:'책임 정산을 마쳐야 합니다.'};
+ }
+}
+window.__back=()=>{const b=backState();if(!b)return false;if(b.can)b.fn();else toast(b.msg);return true;};
 function nextFilm(){S.filmNo++;save();newFilm();go('plan');}
 
 /* ===== 이벤트 ===== */
@@ -1054,6 +1075,9 @@ document.addEventListener('click',e=>{
  if(act==='cont'){newFilm();go('plan');}
  else if(act==='new'){const keepFaces=S.faces||{};Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,fresh());S.faces=keepFaces;save();newFilm();go('plan');}
  else if(act==='folder'){try{$('#dir').value='';}catch(x){}$('#dir').click();}
+ else if(act==='folderPick'){NB&&NB.pickFolder();}
+ else if(act==='folderScan'){NB&&NB.scan();}
+ else if(act==='goback'){window.__back();}
  else if(act==='cpage'){R.cardPage=(R.cardPage||0)+(+arg);render();}
  else if(act==='portrait'){if(F.actor===arg){R.faceFor=arg;render();}else{F.actor=arg;F.place=null;F.mainType=null;render();}}
  else if(act==='face'){R.faceFor=arg;render();}
@@ -1086,5 +1110,6 @@ if(dirInput)dirInput.addEventListener('change',e=>{handleFolder(Array.from(e.tar
 
 if(typeof globalThis.__USE_TEST!=='undefined')globalThis.__USE_T={S,R,TEXT,CUTS:()=>CUTS,newFilm,doShoot,scoreFilm,reviewLines,rollJudges,aLv,dLv,unlocked,typesOf,placesOf,actorsList,HALLS,WRITERS,slotsNow,candsNow,normType};
 render();
+if(NB&&NB.hasFolder()){R.folderMsg='그림 폴더를 읽는 중…';render();setTimeout(()=>NB.scan(),50);}
 })();
 </script>
