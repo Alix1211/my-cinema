@@ -708,8 +708,8 @@ function viewPlan(){
  }
  let castHTML='';
  if(F.actor&&F.place&&F.mainType){
-  const oth=actorsList().filter(a=>a!==F.actor&&placesOf(a).includes(F.place)),full=(F.cast||[]).length>=2;
-  castHTML=`<div class="sec"><div class="sech"><h3>조연 (최대 2명)</h3></div>${oth.length?`<div class="opts">${oth.map(a=>{const on=F.cast.includes(a),fee=castFee(a),can=on||(!full&&S.funds>=castCost()+fee);return `<button class="pn ${on?'sel':'cream'}" data-act="cast" data-arg="${esc(a)}" ${can?'':'disabled'}><b>${esc(a)}</b><small>출연료 ₡ ${fmt(fee)}</small></button>`;}).join('')}</div>`:'<div class="small mut">이 장소에 나올 수 있는 다른 배우가 없습니다.</div>'}</div>`;
+  const oth=actorsList().filter(a=>a!==F.actor),full=(F.cast||[]).length>=2;
+  castHTML=`<div class="sec"><div class="sech"><h3>조연 (최대 2명)</h3></div>${oth.length?`<div class="opts">${oth.map(a=>{const on=F.cast.includes(a),fee=castFee(a),can=on||(!full&&S.funds>=castCost()+fee);return `<button class="pn ${on?'sel':'cream'}" data-act="cast" data-arg="${esc(a)}" ${can?'':'disabled'}><b>${esc(a)}</b><small>출연료 ₡ ${fmt(fee)}</small></button>`;}).join('')}</div>`:'<div class="small mut">함께할 다른 배우가 아직 없습니다.</div>'}</div>`;
  }
  const ready=F.actor&&F.place&&F.mainType;
  const inv=nh?`<div class="sec"><div class="sech"><h3>투자</h3></div><div class="row"><div class="grow"><b style="font-family:var(--f-d)">시사회장 승급 · ${nh.name}</b><div class="small" style="color:var(--ink2)">심사위원 ${nh.seats.length}명 · 기준선 ${nh.thr}점 · 수입 ×${nh.mult}</div></div><button class="pl ${S.funds>=nh.cost?'gold':'gray'}" data-act="upgrade" ${S.funds>=nh.cost?'':'disabled'}>₡ ${fmt(nh.cost)}</button></div></div>`:'';
@@ -737,9 +737,9 @@ function viewScript(){
 
 /* ===== 화면: 촬영 ===== */
 function genFor(m,n0){
- const F=R.film;
- const main=cutsOf(m,F.place,F.mainType);
- const others=CUTS.filter(c=>c.actor===m&&c.place===F.place&&c.type!==F.mainType&&unlocked(m,c.type));
+ const F=R.film,lead=m===F.actor;
+ const main=lead?cutsOf(m,F.place,F.mainType):CUTS.filter(c=>c.actor===m&&c.type===F.mainType&&unlocked(m,c.type));
+ const others=CUTS.filter(c=>c.actor===m&&(lead?c.place===F.place:true)&&c.type!==F.mainType&&unlocked(m,c.type));
  const n=Math.min(n0,main.length+others.length);
  const nm=Math.min(main.length,Math.ceil(n*.6));
  let cands=shuffle(main.slice()).slice(0,nm);
