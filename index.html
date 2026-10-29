@@ -1,0 +1,1090 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>무삭제 시네마 제작소</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Nanum+Myeongjo:wght@400;700;800&display=swap">
+<style>
+/* 극장 로비 한 가지 세계라 다크 단일 테마. 색은 전부 토큰, 장식은 전부 그림 에셋(a/*.webp). */
+:root{color-scheme:dark;
+--bg:#140a0d;--bg2:#1d1015;--wine:#6e1226;--wine-l:#a8283f;
+--gold:#d9b25c;--gold-d:#8a6a28;--cream:#f3ead8;--cream2:#e7d9bd;
+--ink:#3b2218;--ink2:#6b4a3a;--mut:#8a6f60;--lt:#f5e6c8;--lt2:#cdb89a;
+--ok:#2f8f78;--warn:#b5791c;--bad:#b3233a;
+--f-d:'Nanum Myeongjo','Batang','Noto Serif KR',serif;
+--f-b:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--lt);font:400 14px/1.5 var(--f-b);-webkit-tap-highlight-color:transparent;
+padding-block:8px 48px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+h1,h2,h3{font-family:var(--f-d);margin:0;font-weight:800;text-wrap:balance}
+h2{font-size:20px;color:var(--ink)}h3{font-size:14px;color:var(--wine);letter-spacing:.04em}
+p{margin:0}img{display:block;max-width:100%}
+.small{font-size:12px}.mut{color:var(--mut)}.gold{color:var(--gold-d)}
+/* ===== 플레이트(금장 판) : 9분할 이미지 ===== */
+.pl{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-style:solid;border-width:13px;border-image-slice:30 fill;border-image-width:13px;border-image-repeat:stretch;
+background:none;font:600 14px/1.2 var(--f-b);padding:2px 6px;min-height:46px;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none;text-align:center}
+.pl.wide{display:flex;width:100%}
+.pl.gold{border-image-source:url(a/plate_01.webp);color:#3b2208}
+.pl.cream{border-image-source:url(a/plate_02.webp);color:var(--ink)}
+.pl.wine{border-image-source:url(a/plate_05.webp);color:var(--lt)}
+.pl.gray,.pl:disabled{border-image-source:url(a/plate_03.webp);color:#6f665c;cursor:not-allowed}
+.pn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border-style:solid;border-width:11px;border-image-slice:26 fill;border-image-width:11px;border-image-repeat:stretch;
+background:none;font:600 13px/1.25 var(--f-b);padding:1px 4px;min-height:44px;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none;text-align:center}
+.pn small{font-size:10.5px;font-weight:400;opacity:.8}
+.pn.cream{border-image-source:url(a/plate_08.webp);color:var(--ink)}
+.pn.sel{border-image-source:url(a/plate_10.webp);color:#3b2208}
+.pn.lock,.pn:disabled{border-image-source:url(a/plate_11.webp);color:#6f665c;cursor:not-allowed}
+button:focus-visible,.cut:focus-visible,.in:focus-visible,.pad:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.in{width:100%;font:600 16px var(--f-d);color:var(--ink);background:rgba(255,255,255,.55);border:1px solid var(--gold-d);border-radius:6px;padding:8px 10px;text-align:center}
+/* ===== 헤더(로비) ===== */
+.head{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--gold-d)}
+.head img.lobby{width:100%;height:auto;aspect-ratio:3/1;object-fit:cover}
+.hud{position:absolute;left:6px;right:6px;top:6px;display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:5px}
+.hp{border-style:solid;border-width:9px;border-image:url(a/plate_06.webp) 24 fill/9px stretch;min-height:40px;padding:0 4px;display:flex;flex-direction:column;justify-content:center;color:var(--ink);font-size:11px;line-height:1.2;text-align:center}
+.hp.w{border-image-source:url(a/plate_05.webp);color:var(--lt)}
+.hp b{font:800 14px var(--f-d);font-variant-numeric:tabular-nums}
+.gbar{height:5px;border-radius:3px;background:#3a2a20;overflow:hidden;margin-top:2px;border:1px solid rgba(138,106,40,.7)}
+.gbar i{display:block;height:100%;background:url(a/bar_03.webp) 0 0/100% 100%;transition:width .4s}
+.gbar.dig i{background-image:url(a/bar_04.webp)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tab{border-style:solid;border-width:10px;border-image:url(a/plate_06.webp) 26 fill/10px stretch;min-height:40px;display:flex;align-items:center;justify-content:center;font:700 13px var(--f-d);color:var(--ink);opacity:.9}
+.tab.on{border-image-source:url(a/plate_05.webp);color:var(--lt);opacity:1}
+/* ===== 본 패널 ===== */
+.main{border-style:solid;border-width:34px;border-image:url(a/pbig.webp) 108 fill/34px stretch;padding:2px 6px 8px;color:var(--ink);display:flex;flex-direction:column;gap:12px;margin:-2px -4px}
+.main .sub{text-align:center;font-size:12.5px;color:var(--ink2)}
+.sec{display:flex;flex-direction:column;gap:6px}
+.sech{display:flex;align-items:center;gap:8px;color:var(--wine)}
+.sech::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-d),transparent)}
+.sech h3{font-size:15px}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opts .pn{flex:1 1 30%;min-width:84px}
+.row{display:flex;gap:8px;align-items:center}.grow{flex:1;min-width:0}
+/* 심사위원 줄 */
+.jrow{display:flex;gap:8px;align-items:center}
+.jp{position:relative;width:54px;height:54px;flex:none}
+.jp img{position:absolute;inset:7px;width:calc(100% - 14px);height:calc(100% - 14px);border-radius:50%;object-fit:cover;object-position:50% 20%}
+.jp::after{content:'';position:absolute;inset:0;background:url(a/frame_00.webp) center/100% 100%}
+.pips{font-size:11px;letter-spacing:1px;min-width:38px}
+/* 주연 카드 */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.card{position:relative;text-align:left;font:inherit;color:var(--ink);background:none;appearance:none;-webkit-appearance:none;cursor:pointer;touch-action:manipulation;
+border-style:solid;border-width:12px;border-image:url(a/panel_06.webp) 36 fill/12px stretch;padding:0 2px 2px;display:flex;flex-direction:column;gap:3px}
+.card.sel{border-image-source:url(a/plate_05.webp);color:var(--lt)}
+.card:disabled{filter:grayscale(1) brightness(.85);cursor:not-allowed}
+.card .ph2{aspect-ratio:5/3.6;overflow:hidden;border-radius:4px;background:radial-gradient(90% 90% at 50% 20%,#4a1a28,#1b0d12)}
+.card .ph2 img{width:100%;height:100%;object-fit:cover;object-position:50% 2%}
+.card .nm{display:flex;align-items:center;gap:6px;font:800 15px var(--f-d)}
+.card .nm i{font:600 11px var(--f-b);font-style:normal;color:var(--gold-d)}
+.card.sel .nm i{color:var(--gold)}
+.chk{margin-left:auto;width:22px;height:22px;background:url(a/plate_13.webp) 0 0/100% 100%}
+.card.sel .chk,.wc.sel .chk{background-image:url(a/plate_12.webp)}
+.card.sel .chk::after,.wc.sel .chk::after{content:'✓';display:grid;place-items:center;height:100%;color:#3b2208;font-weight:800;font-size:13px}
+.cbar{height:5px;border-radius:3px;background:#3a2a20;overflow:hidden}.cbar i{display:block;height:100%;background:linear-gradient(90deg,#b88a2e,#e8c870)}
+/* 작가 카드 */
+.wc{position:relative;text-align:left;font:inherit;color:var(--ink);background:none;appearance:none;-webkit-appearance:none;cursor:pointer;touch-action:manipulation;
+border-style:solid;border-width:12px;border-image:url(a/panel_06.webp) 36 fill/12px stretch;padding:0 1px 2px;display:flex;flex-direction:column;gap:3px}
+.wc.sel{border-image-source:url(a/plate_05.webp);color:var(--lt)}
+.wc:disabled{filter:grayscale(1) brightness(.85);cursor:not-allowed}
+.wc img{width:100%;aspect-ratio:1/.8;object-fit:cover;object-position:50% 25%;border-radius:4px}
+.wc b{font:800 14px var(--f-d)}.wc .d{font-size:11px;line-height:1.35;opacity:.85}
+.wc .pr{display:flex;align-items:center;gap:6px;font:700 13px var(--f-b);white-space:nowrap}
+/* ===== 컷 타일 ===== */
+.cuts{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.cut{position:relative;display:flex;flex-direction:column;gap:2px;padding:0;background:none;border:0;color:var(--ink);font:inherit;cursor:pointer;text-align:center;touch-action:manipulation}
+.cut .fr{position:relative;aspect-ratio:3/4;border-style:solid;border-width:9px;border-image:url(a/frame_02.webp) 44/9px stretch;background:#000;overflow:hidden}
+.cut .fr>img,.cut .fr>video,.cut .fr>.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cut .cap{font:700 11px var(--f-d);color:var(--ink)}
+.cut .ty{font:500 10px var(--f-b);background:var(--wine);color:var(--lt);border-radius:3px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vtag{position:absolute;left:3px;bottom:3px;z-index:2;font-size:10px;background:rgba(0,0,0,.65);color:#ffd48a;border-radius:4px;padding:0 4px}
+.cut.cur .fr{outline:3px solid var(--gold);outline-offset:-2px}
+.card .ph2{position:relative;cursor:pointer}
+.pgnav{display:flex;align-items:center;justify-content:center;gap:10px}
+.pgnav .pn{min-width:56px;min-height:36px;font-size:16px}
+.edit{position:absolute;right:4px;top:4px;cursor:pointer;background:rgba(20,10,13,.72);color:var(--lt);border:1px solid var(--gold-d);border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:12px}
+.nof{position:absolute;inset:0;display:grid;place-items:center;color:var(--lt2);font:600 12px var(--f-b)}
+.cut.used .fr{outline:2px solid var(--warn);outline-offset:-1px}
+.cut.picked{opacity:.32}.cut:disabled{cursor:not-allowed;opacity:.4}
+.ctag{position:absolute;right:3px;top:3px;z-index:2;font-size:9.5px;background:rgba(0,0,0,.7);border-radius:4px;padding:1px 4px;color:#ffd48a}
+.ph{display:flex;flex-direction:column;justify-content:flex-end;gap:1px;padding:5px;font-size:10px;line-height:1.3;color:#f5e6c8;background:linear-gradient(160deg,hsl(var(--h) 38% 28%),hsl(var(--h) 45% 12%))}
+.ph b{font:800 12px var(--f-d)}.ph em{font-style:normal;color:#cdb89a;font-size:9px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{position:relative;aspect-ratio:3/4;border-style:solid;border-width:9px;border-image:url(a/frame_02.webp) 44/9px stretch;background:rgba(59,34,24,.12);overflow:hidden}
+.slot>img,.slot>video,.slot>.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slot .no{position:absolute;left:2px;top:2px;z-index:3;font:800 11px var(--f-d);background:var(--gold);color:#3b2208;border-radius:4px;padding:0 5px}
+.slot .rm{position:absolute;inset:0;background:none;border:0;padding:0;cursor:pointer;z-index:1}
+.slot .mv{position:absolute;left:0;right:0;bottom:0;opacity:.9;z-index:3;display:flex;justify-content:space-between;padding:2px}
+.slot .mv button{font:700 11px var(--f-b);width:26px;height:22px;border-radius:5px;border:1px solid var(--gold-d);background:rgba(20,10,13,.75);color:var(--lt);cursor:pointer;padding:0}
+.slot .mv button:disabled{color:#6f665c;cursor:not-allowed}
+.meter{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;justify-content:center}
+.meter b{font-variant-numeric:tabular-nums}
+.slate{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--gold-d);background:#0c070a}
+.slate .clap{height:26px;background:repeating-linear-gradient(120deg,#eee5d8 0 18px,#0c070a 18px 36px);transform-origin:left bottom;animation:clap 1.3s ease-in both}
+.slate .sb{padding:12px 14px;display:flex;flex-direction:column;gap:3px;color:var(--lt)}
+@keyframes clap{0%{transform:rotate(-18deg)}70%{transform:rotate(-18deg)}85%{transform:rotate(0)}100%{transform:rotate(0)}}
+.reveal{animation:rev .35s ease-out both}
+@keyframes rev{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* ===== 시사회 무대 ===== */
+.theater{position:relative;border-radius:10px;overflow:hidden;background:#12080b;border:1px solid var(--gold-d)}
+.theater .val,.theater .bs{width:100%;height:auto}
+.win{position:relative;aspect-ratio:4/5;background:#000;overflow:hidden}
+.scr-in{position:absolute;inset:0;overflow:hidden;transition:opacity .3s}
+.win.off .scr-in{opacity:0}
+.win.on{animation:poweron .8s ease-out}
+@keyframes poweron{0%{transform:scaleY(.015);filter:brightness(5)}55%{transform:scaleY(1);filter:brightness(2.6)}100%{filter:none}}
+.pan{position:absolute;left:0;top:0;max-width:none;will-change:transform}
+.pan.ph{inset:auto;justify-content:center;align-items:center;text-align:center}
+.slide{position:absolute;inset:0;overflow:hidden;animation:rev .4s ease-out both}
+.slide .cap2{position:absolute;right:15.5%;bottom:8px;font:700 11px var(--f-d);background:rgba(0,0,0,.6);padding:1px 7px;border-radius:4px;color:var(--lt);z-index:3}
+.dr{position:absolute;top:0;bottom:0;width:14%;display:flex;flex-direction:column;pointer-events:none;z-index:4}
+.dr.l{left:0}.dr.r{right:0}
+.dr img{width:100%}
+.dr .s0{flex:1;min-height:0;height:auto;object-fit:fill}
+.dr .s1,.dr .s2{height:auto;flex:none}
+.hall{position:relative;display:flex;justify-content:center;align-items:flex-end;margin-top:-8px;padding:4px 4% 0;background:linear-gradient(#12080b,#2a1019 60%,#3a1722)}
+.jd{position:relative;flex:none;transform-origin:50% 100%}
+.jd img{width:100%;height:auto}
+.jd.flip img{transform:scaleX(-1)}
+.badge{position:absolute;left:50%;bottom:7%;width:9px;height:9px;transform:translateX(-50%) rotate(45deg);background:#7e8fa6;box-shadow:0 0 6px currentColor;color:#7e8fa6}
+.badge.g2{background:#52b79d;color:#52b79d}.badge.g3{background:#d9b25c;color:#d9b25c}.badge.g4{background:#c8405b;color:#c8405b}
+.badge.g5{background:linear-gradient(135deg,#5ee,#e7e,#fe6,#5ee);background-size:300% 300%;animation:holo 2s linear infinite;color:#e7e}
+@keyframes holo{to{background-position:300% 300%}}
+.jd.bob{animation:bob .8s ease-in-out 2}
+.jd.shake{animation:shk .5s linear 2}
+.jd.tilt{animation:tilt 1.2s ease-in-out}
+.jd.creak{animation:creak .5s linear 2}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3%)}}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-3%)}75%{transform:translateX(3%)}}
+@keyframes tilt{0%,100%{transform:rotate(0)}40%,70%{transform:rotate(-4deg)}}
+@keyframes creak{0%,100%{transform:translateX(0)}30%{transform:translateX(-2px)}70%{transform:translateX(2px)}}
+.cast{position:relative;display:grid;grid-template-columns:27% 1fr 27%;gap:2px;align-items:end;margin-top:-6px;
+border-style:solid;border-width:13px;border-image:url(a/panel_07.webp) 36 fill/13px stretch;padding:0 2px 0;min-height:112px;color:var(--ink)}
+.cp{position:relative;margin-top:-62px;min-width:0}
+.cp img{width:100%;height:auto;aspect-ratio:1/1.12;object-fit:cover;object-position:50% 2%}
+.cp .nmp{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font:700 11px var(--f-d);background:var(--wine);color:var(--lt);border-radius:4px;padding:0 8px;white-space:nowrap;border:1px solid var(--gold-d)}
+.cc{display:flex;flex-direction:column;align-items:center;gap:5px;padding-bottom:4px}
+.say{width:100%;min-height:50px;display:flex;flex-direction:column;justify-content:center;text-align:center;font:600 12.5px/1.4 var(--f-d);color:var(--ink);
+border-style:solid;border-width:11px;border-image:url(a/plate_08.webp) 26 fill/11px stretch;padding:0 2px}
+.say small{display:block;font:500 10px var(--f-b);color:var(--wine)}
+.dots{display:flex;gap:5px;justify-content:center}
+.dots i{width:7px;height:7px;border-radius:50%;background:#b8a58a}.dots i.on{background:var(--wine)}
+/* 결과 */
+.sc-wrap{display:flex;flex-direction:column;gap:10px}
+.big{font:800 54px/1 var(--f-d);font-variant-numeric:tabular-nums;color:var(--wine)}
+.fr2{display:grid;grid-template-columns:90px 1fr 38px;gap:8px;align-items:center;font-size:12.5px}
+.fr2 b{font-variant-numeric:tabular-nums;text-align:right}
+.quote{font-family:var(--f-d);font-size:14.5px;line-height:1.7;color:var(--ink);border-left:2px solid var(--gold-d);padding-left:10px;animation:rev .5s ease-out both}
+.quote small{display:block;font-family:var(--f-b);font-size:11px;color:var(--mut)}
+.notice{background:rgba(110,18,38,.1);border:1px solid var(--gold-d);border-radius:8px;padding:8px 10px;font-size:13px}
+.pass{color:var(--ok)}.fail{color:var(--bad)}
+.react{display:flex;gap:4px;justify-content:center;align-items:flex-end}
+.react .pt2{width:30%;max-width:130px}.react img{width:100%;height:auto}
+.react.cheerr .pt2{width:30%}
+/* 타이틀 */
+.ttl{display:flex;flex-direction:column;gap:16px}
+.ttl .hero{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--gold-d)}
+.ttl .hero img{width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.ttl .hero div{position:absolute;inset:auto 0 0 0;padding:40px 16px 14px;background:linear-gradient(transparent,rgba(20,10,13,.92));text-align:center}
+.ttl h1{font-size:34px;line-height:1.15;color:var(--gold);text-shadow:0 2px 12px #000}
+.ttl .sub{font:600 11px var(--f-d);letter-spacing:.3em;color:var(--lt2)}
+.ttl .btns{display:flex;flex-direction:column;gap:8px;max-width:340px;width:100%;margin:0 auto}
+.link{background:none;border:0;color:var(--mut);font:500 12px var(--f-b);text-decoration:underline;cursor:pointer;padding:6px 0}
+/* 체벌 */
+.pstage{position:relative;display:flex;flex-direction:column;gap:8px}
+.exec{display:flex;gap:10px;align-items:center;border-style:solid;border-width:12px;border-image:url(a/panel_07.webp) 36 fill/12px stretch;padding:0 2px;color:var(--ink)}
+.exec .jp{width:62px;height:62px}
+.exec .say2{flex:1;font-family:var(--f-d);font-size:13.5px;line-height:1.5;min-height:44px;display:flex;flex-direction:column;justify-content:center}
+.exec .say2 small{font:500 10.5px var(--f-b);color:var(--wine)}
+.phud{display:flex;justify-content:space-between;font-size:12.5px;font-variant-numeric:tabular-nums;gap:8px;flex-wrap:wrap;background:rgba(0,0,0,.35);border:1px solid var(--gold-d);border-radius:8px;padding:4px 10px}
+.lanes{position:relative;height:330px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lane{position:relative;overflow:hidden;background:radial-gradient(120% 100% at 50% 100%,#3a1722,#12080b);border:1px solid var(--gold-d);border-radius:10px}
+.lane .chara{position:absolute;left:50%;bottom:0;height:64%;width:auto;transform:translateX(-50%);z-index:0;opacity:.95}
+.lane .lt{position:absolute;left:0;right:0;top:6px;text-align:center;font:700 11px var(--f-d);color:var(--lt2);z-index:3}
+.hitline{position:absolute;left:0;right:0;bottom:62px;height:3px;background:var(--gold);box-shadow:0 0 10px var(--gold);z-index:1}
+.note{position:absolute;left:50%;top:0;width:52px;height:52px;margin-left:-26px;display:grid;place-items:center;font:800 12px var(--f-d);color:#3b2208;will-change:transform;z-index:2;background:url(a/plate_12.webp) 0 0/100% 100%}
+.lane.L .note{background-image:url(a/plate_15.webp);color:var(--lt)}
+.note.perfect{filter:brightness(1.5);transition:opacity .25s;opacity:0}
+.note.good{opacity:0;transition:opacity .25s}
+.note.miss{filter:grayscale(1);opacity:.35}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pad{min-height:84px;font:800 18px var(--f-d);touch-action:none;user-select:none;-webkit-user-select:none}
+.pad.hit{filter:brightness(1.5)}
+.fx{position:absolute;left:0;right:0;bottom:84px;text-align:center;font:800 18px var(--f-d);pointer-events:none;animation:fx .7s ease-out both;z-index:5;text-shadow:0 2px 6px #000}
+.fx.ok{color:#7be0c3}.fx.warn{color:#ffd48a}.fx.bad{color:#ff8a9c}
+@keyframes fx{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-34px)}}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(10,5,8,.92);display:flex;flex-direction:column;gap:10px;padding:14px;overflow:auto}
+.overlay .in2{max-width:520px;width:100%;margin:auto;display:flex;flex-direction:column;gap:10px}
+.shake{animation:sh .35s linear}
+@keyframes sh{0%,100%{transform:translate(0)}20%{transform:translate(-7px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-5px,3px)}80%{transform:translate(4px,-2px)}}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--cream);color:var(--ink);padding:10px 14px;border-radius:8px;font-size:13px;max-width:min(92vw,420px);z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.pend{display:flex;gap:8px}
+.fimg{display:flex;justify-content:center;gap:6px;align-items:flex-end}
+.fimg img{height:190px;width:auto}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (max-width:400px){.ttl h1{font-size:30px}}
+</style>
+
+<div class="wrap" id="app"></div>
+<input type="file" id="dir" webkitdirectory multiple hidden>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===== 케인 님 수정용 텍스트 목록 (여기 문구만 고치면 됩니다. {주연} {장소} {n}은 게임이 채우는 자리) ===== */
+const TEXT={
+ critic:{
+  '최하':[
+   `{장소}에서 펼쳐진 이 작품은 연출이 아니라 사고였습니다. 배우의 영혼이 카메라를 피해 도망간 흔적이 역력합니다.`,
+   `음향은 정직했고 조명은 성실했으나, 그 둘을 묶어야 할 의도가 결석했습니다. 출석부에 기록해 두겠습니다.`,
+   `제작진의 성의는 인정합니다. 다만 성의와 작품 사이의 거리를, 저는 오늘 처음 실측했습니다.`],
+  '하':[
+   `{주연}의 노력은 가상하나 아직 숙성되지 못했습니다. 풋과일의 떫은맛이 납니다.`,
+   `컷의 호흡이 평이해서, 저는 중간에 가죽 의자의 결을 감상했습니다. 의자 쪽이 더 서사적이었습니다.`,
+   `기대에는 못 미쳤으나 비용 대비로는 정직한 결과물입니다. 칭찬은 아닙니다.`],
+  '중':[
+   `무난합니다. 오늘 밤의 {주연}은 성실했고, 카메라는 그 성실함을 정직하게 기록했습니다.`,
+   `{주연}이라는 자산의 이번 분기 수익률은 평균입니다. 박수는 예의의 영역에서 드리겠습니다.`,
+   `절제를 미덕으로 읽기로 했습니다. 읽어 드린 쪽의 수고도 평가에 반영해 주시길.`],
+  '상':[
+   `{장소}의 조명 아래에서 {주연}은 한 편의 시가 되었습니다. 저는 중간에 안경을 닦았습니다. 눈물이 아니라 김이 서려서입니다.`,
+   `{주연}의 몸값은 오늘 밤 한 단계 오른 것으로 감히 평가합니다. 계약 갱신 때 참고하시지요.`,
+   `올해 제가 본 가장 윤기 있는 문장이었습니다. 문장입니다. 문장이라고 해 두겠습니다.`],
+  '최상':[
+   `인류가 체면을 내려놓는 순간이 이토록 고결할 수 있다니. 저는 오늘 인간의 해체에서 신의 설계도를 보았습니다.`,
+   `이 작품 앞에서 '무삭제'는 수식어가 아니라 겸손한 표현입니다. 삭제할 것이 애초에 없었습니다.`,
+   `{주연}의 예술혼이 스크린을 뚫고 객석의 가죽 의자까지 데웠습니다. 기립은 의무이며, 후원은 권리입니다.`]
+ },
+ nitpick:{
+  ho:[`상대 배우들과의 호흡이 이중주가 아니라 교통정리 같았습니다. 감독님은 지휘봉을 어디에 두고 오셨습니까?`],
+  ang:[`앵글의 전환이 거칠었습니다. 이 장면의 인물에게 필요했던 건 헌신이 아니라 삼각대였습니다.`],
+  mov:[`열정은 인정합니다. 그러나 동선에 서사가 없습니다. 반복은 리듬이 아니라 습관입니다.`],
+  teeth:[`그토록 헌신적인 장면에서 치아의 색조가 조명 온도와 불화한 점이 몰입을 해쳤습니다. 분장팀에 서면으로 항의하겠습니다.`]
+ },
+ bluff:{
+  eyeGood:[`제{n}컷, {주연}의 눈빛은 카메라 너머의 관객을 정확히 응시했습니다. 저는 그 시선 앞에서 고해성사를 했습니다.`],
+  eyeBad:[`제{n}컷의 눈빛은 초점을 잃었습니다. 대본을 외우는 사람의 눈빛이었습니다.`],
+  poseGood:[`자세의 곡선이 고전 조각의 비례를 연상시켰습니다. 미켈란젤로가 조명을 맡았어도 이보다 낫지 않았을 겁니다.`],
+  poseBad:[`자세가 지나치게 실용적이었습니다. 예술은 효율이 아니라 낭비에서 피어납니다.`],
+  face:[`제{n}컷의 표정은 고뇌와 환희 사이 어딘가, 정확히 세무서 앞의 표정이었습니다.`],
+  lie:[`저는 제{n}컷을 세 번 돌려 보았습니다.`]
+ },
+ react:{
+  pos:[
+   {a:'shake',t:`음… 음…`},
+   {a:'shake',t:`(펜을 떨어뜨림) 실례. 손이 예술에 반응했습니다.`},
+   {a:'bob',t:`(안경을 고쳐 씀) 흥미롭군요. 아주 학술적으로.`},
+   {a:'bob',t:`이것은 예술입니다. 이의 있는 분?`}],
+  neu:[{a:'creak',t:`(헛기침) 조명이 눈부셔서입니다.`}],
+  neg:[
+   {a:'tilt',t:`관객을 존중하지 않는 롱테이크로군요.`},
+   {a:'tilt',t:`호흡이 길어 잠시 명상에 들었습니다.`}]
+ },
+ /* 세 주인공 — 위에는 비굴하게, 자기들끼리는 뻔뻔하게 */
+ dirUp:[
+  `과분한 말씀입니다. 저는 한 일이 없고, 전부 후원님들 덕입니다.`,
+  `역시 보시는 눈이 다르십니다. 저희는 시키신 대로 찍었을 뿐입니다.`,
+  `(허리를 깊이 숙이며) 다음 작품은 취향에 맞춰 더 낮게 모시겠습니다.`,
+  `그 말씀, 액자로 만들어 사무실 벽에 걸어 두겠습니다.`],
+ dirDown:[
+  `아, 네. 그렇습니다. 전부 제 불찰입니다. 다시 찍어 오겠습니다.`,
+  `송구합니다. 배우는 바꾸셔도 되고, 저는 갈아 끼우셔도 됩니다.`,
+  `말씀 새겨듣겠습니다. 다음에는 지적하실 틈조차 없게 하겠습니다.`,
+  `(식은땀을 닦으며) 과연 날카로우십니다. 저희가 미처 거기까지는.`],
+ actUp:[
+  `감독님, 방금 반응 좋았죠? 다음 계약서엔 이 컷 값을 따로 적어 주세요.`,
+  `이 컷은 재활용해도 되겠네요. 한 번 찍어서 세 번 벌면 효율이죠.`,
+  `저분들 웃는 걸 보니 단가를 올려도 되겠어요.`,
+  `제 연기가 좋았다기보다 제 몸값이 좋았던 거죠. 어느 쪽이든 정산은 같고요.`],
+ actDown:[
+  `저 표정은 계약서에 없었어요. 추가 수당 청구하겠습니다.`,
+  `어차피 정산은 결과 나온 뒤니까, 다음 판에 단가를 올려 말하죠.`,
+  `감독님이 숙이는 각도가 성의 없었어요. 저는 더 깊이 숙일 수 있는데, 그건 시급이 따로예요.`,
+  `괜찮아요. 욕먹는 것도 노출이잖아요. 노출은 자산이죠.`],
+ moneyDir:{
+  pass:[`이 정도면 이번 분기 접대비까지 나옵니다. 후원님들께 감사 인사부터 올리겠습니다.`,`통장이 아니라 인맥이 두둑해졌습니다. 둘 다 환영입니다.`],
+  fail:[`수입은 이미 들어왔습니다. 체면은 외상으로 두겠습니다.`,`적자만은 아니니 다행입니다. 체면은 원래 장부에 올리지 않습니다.`]},
+ moneyAct:{
+  pass:[`제 몫은 몇 퍼센트죠? 계산기부터 두드릴게요.`,`저, 이번 컷으로 한 달 월세는 나오죠? 두 달이면 더 좋고요.`],
+  fail:[`일은 했는데 정산하고 나면 남는 게 없네요. 몸은 쓰는데 통장은 안 닳아요.`,`다음엔 선금으로 받죠. 평가가 이러면 후불은 위험해요.`]},
+ dirBeg:[
+  `감사합니다. 맞을 때마다 한 수 배웁니다.`,
+  `제가 부족해 이렇게까지 신경 써 주시니 몸 둘 바를 모르겠습니다.`,
+  `한 번 더 부탁드려도 되겠습니까. 아니, 부탁드립니다.`,
+  `(숨을 고르며) 아닙니다, 제 불찰입니다. 계속하시지요.`],
+ exec:{
+  start:`감독님, 예술에는 책임이 따르는 법입니다. 정중히 시작하겠습니다.`,
+  hit:[`이것은 처벌이 아니라 피드백입니다.`,`작품의 부족분을 신체로 환산해 보았습니다.`,`아름다운 반응이군요. 다음 작품에 반영하시길.`],
+  hold:`맷집 또한 연출력입니다. 인정합니다.`,
+  boost:`비명이 아니라 발성입니다. 한 번 더 부탁합니다.`,
+  exempt:`아, 후원이시군요. 예술은 언제나 후원자의 몫이지요.`,
+  end:`오늘의 수업료는 정산되었습니다. 차기작을 기대하겠습니다.`
+ },
+ levelup:[
+  `{주연}의 연기 스펙트럼이 넓어졌습니다. 즉, 팔 수 있는 상품의 종류가 늘었다는 뜻입니다. (출연료 인상분 확인 완료)`,
+  `새로운 영역에 도전한 {주연}에게 비평계는 경의를 표합니다. (본인은 계약서 3쪽을 다시 읽는 중)`,
+  `{주연}: 어머, 제가 이런 것도 할 수 있었네요? 단가표부터 고칠게요.`],
+ titles:[`{장소}의 {disp}`,`{주연}, 그 {disp}의 밤`,`{disp}에 관한 열두 개의 소고`,`{장소} 노트 — {disp}`,`고요한 {disp}`,`{disp}: 어느 연출가의 변명`]
+};
+
+/* ===== 데이터 ===== */
+const TYPE_DEFS={
+ '대기':{tier:1,label:'독백'},'구강':{tier:1,label:'발성 기관 심화 연구'},'삽입':{tier:1,label:'정면 승부'},
+ '로맨스':{tier:2,label:'서정 멜로'},'유혹':{tier:2,label:'전희의 수사학'},'파이즈리':{tier:2,label:'흉곽 건축학'},'희롱':{tier:2,label:'지적 유희'},
+ '다인봉사':{tier:2,label:'합창단의 헌신',raw:'다인 봉사'},'다인삽입':{tier:2,label:'군무(群舞)'},'특수':{tier:2,label:'촉각 연구소'},
+ '괴한':{tier:3,label:'불청객의 미학'},'수치':{tier:3,label:'홍조의 심리학'},
+ '미분류':{tier:0,label:'미분류 단편'}
+};
+const ALIAS={'로맨그':'로맨스'};
+/* 폴더 이름 끝의 #숫자(예: 목욕#3)는 배우 Lv 해금 단계(1~5). 숫자 없는 새 이름은 처음부터 열림 */
+let CUSTOM_TIER={};
+const normType=s=>{s=(s||'').replace(/\s+/g,'');const m=/#(\d)$/.exec(s);if(m){s=s.slice(0,m.index);const t=clamp(+m[1],1,5);s=ALIAS[s]||s;CUSTOM_TIER[s]=Math.max(CUSTOM_TIER[s]||0,t);return s;}return ALIAS[s]||s;};
+const typeInfo=k=>{const d=TYPE_DEFS[k];const ct=CUSTOM_TIER[k];if(d)return ct?Object.assign({},d,{tier:ct}):d;return {tier:ct||1,label:k};};
+const tlabel=k=>typeInfo(k).label;
+const rawLabel=k=>(TYPE_DEFS[k]&&TYPE_DEFS[k].raw)||k;
+
+const SPEC=[
+ {actor:'로지로프',place:'뒷골목',types:['미분류']},
+ {actor:'로지로프',place:'야간산책',types:['구강','대기','삽입','수치']},
+ {actor:'로지로프',place:'호텔',types:['구강','대기','삽입','특수']},
+ {actor:'초선',place:'객잔',types:['괴한','구강','로맨스','삽입','유혹','파이즈리']},
+ {actor:'초선',place:'숙소',types:['다인봉사','다인삽입','대기','희롱']}
+];
+/* 심사위원 그림(임시): 좌석 0·4는 같은 사람을 좌우 반전해 씀. 이름·직함도 임시. */
+const PERSONAS=[
+ {name:'연방 예술원 석좌',f:'jf_2',b:'jb_2',flip:true},
+ {name:'수석 평론가',f:'jf_0',b:'jb_0'},
+ {name:'초상류 후원회장',f:'jf_1',b:'jb_1'},
+ {name:'무삭제 협회 부회장',f:'jf_2',b:'jb_2'},
+ {name:'명예 자문위원',f:'jf_0',b:'jb_0',flip:true}
+];
+/* 전속(그림 보유): 감독·로지로프·초선. 포즈 0 불안한 미소 / 1 두 손 모음 / 2 고개 숙임 / 3 가슴에 손 */
+const CAST={'로지로프':'ros','초선':'cho'};
+const DIRK='dir';
+const NPOS=['hit','bow','run','cheer'];
+const HALLS=[
+ {name:'소극장',seats:[1,2,3],grades:[1,1,2],thr:50,mult:1,cost:0},
+ {name:'중극장',seats:[0,1,2,3],grades:[1,2,2,3],thr:62,mult:1.8,cost:6000},
+ {name:'대극장',seats:[0,1,2,3,4],grades:[2,3,3,4,5],thr:68,mult:3.2,cost:18000}
+];
+const WRITERS=[
+ {id:'self',name:'감독 본인',note:'가장 잘 아는 이야기, 직접 씁니다.',cost:0,bonus:0,im:'w_0'},
+ {id:'rookie',name:'무명 대필가',note:'시장의 감각이 뛰어난 작가입니다.',cost:300,bonus:3,im:'w_1'},
+ {id:'mid',name:'극작가',note:'탄탄한 구성과 깊이 있는 이야기를 씁니다.',cost:900,bonus:6,im:'w_2'},
+ {id:'master',name:'시네마 거장',note:'시대를 초월하는 명작의 이야기를 선사합니다.',cost:2500,bonus:10,im:'w_3'}
+];
+const GRADE_COLOR=['','#7e8fa6','#2f8f78','#b5791c','#b3233a','#8a2be2'];
+const ACT_TH=[0,120,300,560,900],DIR_TH=[0,50,130,260,450];
+const HIT_TOP=62;
+const FALL=1300;
+
+/* ===== 유틸 ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hue=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))%360;return h;};
+const fill=(s,o)=>s.replace(/\{주연\}/g,o.actor||'').replace(/\{장소\}/g,o.place||'').replace(/\{n\}/g,o.n||'').replace(/\{disp\}/g,o.disp||'');
+const IM=n=>`a/${n}.webp`;
+
+/* ===== 저장 상태 ===== */
+const KEY='use-cinema-v1';
+const fresh=()=>({faces:{},funds:1000,hall:0,dirExp:0,dignity:100,hits:0,filmNo:1,films:0,actors:{},usage:{},combos:[]});
+function loadSave(){try{const j=localStorage.getItem(KEY);return j?JSON.parse(j):null;}catch(e){return null;}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const saved=loadSave();
+const S=Object.assign(fresh(),saved||{});
+const hasSave=!!saved;
+const R={screen:'title',film:null,token:0,skip:false,folderMsg:'',realCount:0};
+const PORTRAIT={}; // 폴더에 portrait 이미지가 있는 배우의 대표 사진
+
+/* ===== 컷 풀 ===== */
+let CUTS=[];
+function buildPlaceholders(){
+ CUTS=[];
+ for(const s of SPEC)for(const t of s.types)for(let i=1;i<=14;i++)
+  CUTS.push({id:`${s.actor}|${s.place}|${t}|${i}`,actor:s.actor,place:s.place,type:t,no:i,src:null});
+}
+buildPlaceholders();
+let ACTOR_LOCK={},MINLOCK=1;
+const actorOpen=a=>(ACTOR_LOCK[a]||1)<=Math.max(dLv(),MINLOCK);
+const openCuts=()=>CUTS.filter(c=>actorOpen(c.actor));
+const actorsList=()=>[...new Set(openCuts().map(c=>c.actor))];
+const placesOf=a=>[...new Set(CUTS.filter(c=>c.actor===a).map(c=>c.place))];
+const typesOf=(a,p)=>[...new Set(CUTS.filter(c=>c.actor===a&&c.place===p).map(c=>c.type))].sort((x,y)=>typeInfo(x).tier-typeInfo(y).tier);
+const cutsOf=(a,p,t)=>CUTS.filter(c=>c.actor===a&&c.place===p&&(t==null||c.type===t));
+const allPlaces=()=>[...new Set(openCuts().map(c=>c.place))];
+const allTypes=()=>[...new Set(openCuts().map(c=>c.type))].filter(t=>t!=='미분류');
+function handleFolder(files){
+ const re=/^\s*([^()（）]+?)\s*[\(（]\s*([^)）]+?)\s*[\)）]/;
+ const arr=[];let skipped=0,tsSkipped=0;CUSTOM_TIER={};const lockTmp={};
+ for(const f of files){
+  const isVid=/\.(mp4|m4v|webm|mov)$/i.test(f.name||'');
+  if(/\.ts$/i.test(f.name||'')){tsSkipped++;continue;}
+  if(!isVid&&(!f.type||!f.type.startsWith('image/'))){skipped++;continue;}
+  const p=(f.webkitRelativePath||'').split('/');
+  if(p.length<2){skipped++;continue;}
+  let idx=-1,m=null;
+  for(let i=0;i<p.length-1;i++){const mm=re.exec(p[i]);if(mm){idx=i;m=mm;break;}}
+  const lk=x=>{const q=/#(\d)\s*$/.exec(x||'');return q?+q[1]:0;};
+  let aName,place,aLock=0,tIdx,idStart;
+  if(idx>=0){
+   aName=m[1].trim();place=m[2].trim();
+   const nm1=/^(.*?)\s*#(\d)$/.exec(aName);if(nm1){aName=nm1[1].trim();aLock=+nm1[2];}
+   const tl=/^\s*#(\d)/.exec(p[idx].slice(m.index+m[0].length));if(tl)aLock=Math.max(aLock,+tl[1]);
+   for(let i=0;i<idx;i++)aLock=Math.max(aLock,lk(p[i]));
+   tIdx=idx+1;idStart=idx;
+  }else{
+   const d=p.slice(0,-1);
+   if(d.length<2){skipped++;continue;}
+   const ai=d.length>=4?2:1;
+   const nm=d[ai].replace(/\s*#\d\s*$/,'').trim();
+   if(!nm){skipped++;continue;}
+   aName=nm;place='기본';aLock=Math.max(lk(d[ai]),ai===2?lk(d[1]):0);
+   tIdx=ai+1;idStart=ai;
+  }
+  if(aLock)lockTmp[aName]=Math.max(lockTmp[aName]||0,clamp(aLock,1,5));
+  const base=p[p.length-1].replace(/\.[^.]+$/,'').toLowerCase();
+  if(base==='portrait'){PORTRAIT[aName]=URL.createObjectURL(f);continue;}
+  const between=p.slice(tIdx,p.length-1);
+  const type=between.length?normType(between[0]):'미분류';
+  arr.push({id:p.slice(idStart).join('/'),actor:aName,place,type,no:arr.length+1,kind:isVid?'video':'img',src:URL.createObjectURL(f)});
+ }
+ if(!arr.length){R.folderMsg=(tsSkipped?`.ts 영상 ${fmt(tsSkipped)}개는 재생할 수 없어 건너뛰었습니다. MP4로 바꿔 주세요. `:'')+'읽을 수 있는 이미지·영상이 없습니다. 이 기기에서는 폴더 선택이 안 될 수 있어, 가짜 컷으로 진행합니다.';render();return;}
+ CUTS=arr;R.realCount=arr.length;
+ ACTOR_LOCK=lockTmp;
+ const names=[...new Set(arr.map(c=>c.actor))];
+ MINLOCK=Math.min(...names.map(n=>ACTOR_LOCK[n]||1));
+ const hidden=names.filter(n=>!actorOpen(n)).length;
+ R.folderMsg=`${fmt(arr.length)}개를 불러왔습니다.`+(skipped?` (제외 ${fmt(skipped)}개)`:'')+(hidden?` 숨김 배우 ${hidden}명(감독 레벨로 해금).`:'')+(tsSkipped?` .ts 영상 ${fmt(tsSkipped)}개는 재생할 수 없어 건너뛰었습니다. MP4로 바꿔 주세요.`:'');
+ if(R.film)newFilm();
+ render();
+}
+
+/* ===== 레벨·해금 ===== */
+const A=n=>S.actors[n]||(S.actors[n]={exp:0,uses:{}});
+const lvOf=(e,th)=>{let lv=1;for(let i=1;i<th.length;i++)if(e>=th[i])lv=i+1;return lv;};
+const aLv=n=>lvOf(A(n).exp,ACT_TH);
+const dLv=()=>lvOf(S.dirExp,DIR_TH);
+const maxTier=n=>Math.min(5,aLv(n));
+const unlocked=(n,t)=>{const i=typeInfo(t);return i.tier===0||i.tier<=maxTier(n);};
+const slotsNow=()=>Math.min(8,5+dLv());
+const candsNow=n=>8+2*aLv(n);
+
+/* ===== 심사위원 ===== */
+function rollJudges(){
+ const h=HALLS[S.hall];const grades=shuffle(h.grades.slice());
+ return h.seats.map((seat,i)=>{
+  const kind=pick(['actor','place','type']);
+  const value=kind==='actor'?pick(actorsList()):kind==='place'?pick(allPlaces()):pick(allTypes());
+  return {seat,persona:PERSONAS[seat],grade:grades[i],pref:{kind,value}};
+ });
+}
+function hint(j){
+ const p=j.pref;
+ if(p.kind==='actor')return `'${p.value}'의 필모그래피를 사랑합니다`;
+ if(p.kind==='place')return `'${p.value}'의 조명 미학을 선호합니다`;
+ return `'${tlabel(p.value)}' 계열에 후한 점수를 줍니다`;
+}
+const prefMatch=(j,c)=>j.pref.kind==='actor'?c.actor===j.pref.value:j.pref.kind==='place'?c.place===j.pref.value:c.type===j.pref.value;
+
+function newFilm(){
+ R.film={actor:null,place:null,mainType:null,writer:null,title:'',slots:0,req:0,cands:[],edit:[],judges:rollJudges(),res:null};
+ R.shootReady=false;R.strip=false;
+}
+
+/* ===== 그림 도우미 ===== */
+/* 돈이 없거나(자금 300 미만 = 가장 싼 작가도 못 씀) 점수가 미달이면 속옷 차림 그림(_u)을 쓴다 */
+const POOR=300;
+const stripOn=()=>R.strip||S.funds<POOR;
+const dirImg=i=>IM(`${DIRK}_${stripOn()?'u':''}${i}`);
+const faceOf=a=>{const id=(S.faces||{})[a];if(id){const c=CUTS.find(x=>x.id===id&&x.src&&x.kind!=='video');if(c)return c.src;}return PORTRAIT[a]||null;};
+function actorPose(actor,i){
+ if(CAST[actor])return IM(`${CAST[actor]}_${stripOn()?'u':''}${i}`);
+ return faceOf(actor);
+}
+function cutHTML(c,full){
+ if(c.src&&c.kind==='video')return `<video src="${esc(c.src)}#t=0.1" muted playsinline preload="metadata" disablepictureinpicture></video><span class="vtag">▶</span>`;
+ if(c.src)return `<img src="${esc(c.src)}" alt=""${full?'':' loading="lazy" decoding="async"'}>`;
+ return `<div class="ph" style="--h:${hue(c.type)}"><b>${esc(c.actor)}</b><span>${esc(c.place)} · ${esc(tlabel(c.type))}</span><em>제${c.no}컷 · 가짜 컷</em></div>`;
+}
+const jpHTML=p=>`<div class="jp"><img src="${IM(p.f)}" alt=""></div>`;
+
+/* ===== 소리·진동 ===== */
+let AC=null;
+function snd(kind){
+ try{
+  AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;
+  o.connect(g);g.connect(AC.destination);
+  if(kind==='thud'){o.type='sine';o.frequency.setValueAtTime(170,t);o.frequency.exponentialRampToValueAtTime(55,t+.2);g.gain.setValueAtTime(.6,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);}
+  else if(kind==='ding'){o.type='triangle';o.frequency.setValueAtTime(880,t);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);}
+  else if(kind==='tick'){o.type='square';o.frequency.setValueAtTime(420,t);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.07);}
+  else {o.type='sawtooth';o.frequency.setValueAtTime(95,t);g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);}
+  o.start(t);o.stop(t+.3);
+ }catch(e){}
+}
+const vib=p=>{try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}};
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.hidden=true;},3200);}
+
+/* ===== 채점 ===== */
+function scoreFilm(F){
+ const cuts=F.edit,N=cuts.length,main=F.mainType;
+ const mainCount=cuts.filter(c=>c.type===main).length;
+ let compat=20*Math.min(1,mainCount/Math.max(1,F.req));
+ const spec=(A(F.actor).uses[main]||0)>=3;
+ if(spec)compat+=3;
+ let runs=0,run=1,changes=0;
+ for(let i=1;i<N;i++){
+  if(cuts[i].type===cuts[i-1].type){run++;}else{if(run>=3)runs++;run=1;changes++;}
+ }
+ if(run>=3)runs++;
+ const distinct=new Set(cuts.map(c=>c.type)).size;
+ const hoheup=N>=6&&changes>=N-1;
+ let comp=13+(distinct>=2?2:0)-3*runs-(distinct<2?3:0)-(hoheup?2:0);
+ comp=clamp(comp,0,15);
+ let pen=0;
+ for(const c of cuts)pen+=Math.min(3,S.usage[c.id]||0)*1.2;
+ const combo=`${F.actor}|${F.place}|${main}`;
+ pen+=2*S.combos.slice(-3).filter(x=>x===combo).length;
+ const fresh=clamp(15-pen,0,15);
+ let wsum=0,tsum=0;
+ for(const j of F.judges){
+  let m;
+  if(j.pref.kind==='actor')m=j.pref.value===F.actor?1:.15;
+  else if(j.pref.kind==='place')m=j.pref.value===F.place?1:.15;
+  else{const k=cuts.filter(c=>c.type===j.pref.value).length;m=clamp(k/Math.ceil(N/3),.05,1);}
+  wsum+=j.grade;tsum+=j.grade*m;
+ }
+ const taste=25*(wsum?tsum/wsum:0);
+ const writer=WRITERS.find(w=>w.id===F.writer).bonus;
+ const luck=rnd(-4,4);
+ const total=Math.round(clamp(compat+comp+fresh+taste+writer+luck,0,100));
+ const band=total<35?'최하':total<50?'하':total<65?'중':total<80?'상':'최상';
+ return {total,band,compat,comp,fresh,taste,writer,luck,mainCount,spec,flags:{runs,hoheup},distinct};
+}
+function reviewLines(F,r){
+ const o={actor:F.actor,place:F.place},N=F.edit.length;
+ const L=[{t:fill(pick(TEXT.critic[r.band]),o)}];
+ let tk=null;
+ if(r.flags.hoheup)tk='ho';else if(r.flags.runs)tk='ang';else if(r.fresh<8)tk='mov';else if(Math.random()<.5)tk='teeth';
+ if(tk)L.push({t:fill(pick(TEXT.nitpick[tk]),o),s:'딴지'});
+ const good=r.total>=65,B=TEXT.bluff;
+ const n=rnd(1,N);
+ const pool=good?[...B.eyeGood,...B.poseGood]:[...B.eyeBad,...B.poseBad];
+ L.push({t:fill(pick(pool),{...o,n}),s:'평론가 메모'});
+ if(Math.random()<.45)L.push({t:fill(pick([...B.face,...B.lie]),{...o,n:rnd(1,N)}),s:'평론가 메모'});
+ return L;
+}
+
+/* ===== 화면 보조 ===== */
+const app=()=>$('#app');
+const gradeBadge=g=>`<span class="pips" style="color:${GRADE_COLOR[g]}">${'◆'.repeat(g)}</span>`;
+const STEPS=['기획','시나리오','촬영','편집'];
+function header(step){
+ const lv=dLv(),prev=DIR_TH[lv-1],nxt=DIR_TH[lv],pct=nxt?Math.round((S.dirExp-prev)/(nxt-prev)*100):100;
+ return `<div class="head"><img class="lobby" src="${IM('lobby')}" alt="">
+ <div class="hud"><div class="hp"><span>자금</span><b>₡ ${fmt(S.funds)}</b></div>
+ <div class="hp w"><span>${HALLS[S.hall].name}</span><b>제${S.filmNo}작</b></div>
+ <div class="hp"><span>감독 Lv.${lv} · 맷집 ${Math.floor(S.hits/12)}</span><div class="gbar" title="감독 경험치"><i style="width:${pct}%"></i></div><div class="gbar dig" title="존엄"><i style="width:${S.dignity}%"></i></div></div></div></div>
+ ${step==null?'':`<div class="tabs">${STEPS.map((s,i)=>`<div class="tab ${i===step?'on':''}">${s}</div>`).join('')}</div>`}`;
+}
+function judgeList(F){
+ return F.judges.map(j=>`<div class="jrow">${jpHTML(j.persona)}<div class="grow"><b style="font-family:var(--f-d)">${esc(j.persona.name)}</b> ${gradeBadge(j.grade)}<div class="small" style="color:var(--ink2)">${esc(hint(j))}</div></div></div>`).join('');
+}
+
+/* ===== 화면: 타이틀 ===== */
+function viewTitle(){
+ return `<div class="ttl"><div class="hero"><img src="${IM('lobby')}" alt=""><div><div class="sub">USE · PRIVATE CINEMA</div><h1>무삭제<br>시네마 제작소</h1></div></div>
+ <div class="btns"><button class="pl gold wide" data-act="cont" ${hasSave?'':'disabled'}>이어하기</button><button class="pl cream wide" data-act="new">새로 시작</button></div>
+ <div style="text-align:center"><button class="link" data-act="folder">폴더 불러오기</button><div class="small mut">${esc(R.folderMsg||'')}</div></div></div>`;
+}
+
+/* ===== 화면: 기획 ===== */
+function viewPlan(){
+ const F=R.film,nh=HALLS[S.hall+1];
+ const as=actorsList().map(a=>{
+  const lv=aLv(a),e=A(a).exp,prev=ACT_TH[lv-1],nxt=ACT_TH[lv],pct=nxt?Math.round((e-prev)/(nxt-prev)*100):100;
+  const spec=Object.entries(A(a).uses).filter(([t,n])=>n>=3).map(([t])=>tlabel(t));
+  const pi=faceOf(a)||(CAST[a]?IM(`${CAST[a]}_0`):null);
+  return `<button class="card ${F.actor===a?'sel':''}" data-act="actor" data-arg="${esc(a)}"><div class="ph2" data-act="portrait" data-arg="${esc(a)}">${pi?`<img src="${pi}" alt="">`:'<span class="nof">✎ 눌러 얼굴 고르기</span>'}<span class="edit" data-act="face" data-arg="${esc(a)}">✎</span></div><div class="nm">${esc(a)}<i>Lv ${lv}</i><span class="chk"></span></div><div class="cbar"><i style="width:${pct}%"></i></div><div class="small" style="opacity:.8">후보 컷 ${candsNow(a)}장 · 해금 ${Math.min(5,lv)}단${spec.length?' · 전문 '+esc(spec.join(', ')):''}</div></button>`;
+ });
+ const PGN=4,pc=Math.max(1,Math.ceil(as.length/PGN));
+ R.cardPage=clamp(R.cardPage||0,0,pc-1);
+ const cardsHTML=`<div class="cards" id="cardpages">${as.slice(R.cardPage*PGN,R.cardPage*PGN+PGN).join('')}</div>`+(pc>1?`<div class="pgnav" id="pgdots"><button class="pn cream" data-act="cpage" data-arg="-1" ${R.cardPage===0?'disabled':''} aria-label="이전 배우">‹</button><div class="dots">${Array.from({length:pc},(_,i)=>`<i class="${i===R.cardPage?'on':''}"></i>`).join('')}</div><button class="pn cream" data-act="cpage" data-arg="1" ${R.cardPage===pc-1?'disabled':''} aria-label="다음 배우">›</button></div>`:'');
+ let placeHTML='',typeHTML='';
+ if(F.actor){
+  placeHTML=`<div class="sec"><div class="sech"><h3>장소</h3></div><div class="opts">${placesOf(F.actor).map(p=>`<button class="pn ${F.place===p?'sel':'cream'}" data-act="place" data-arg="${esc(p)}"><b>${esc(p)}</b><small>컷 ${cutsOf(F.actor,p).length}장</small></button>`).join('')}</div></div>`;
+ }
+ if(F.actor&&F.place){
+  typeHTML=`<div class="sec"><div class="sech"><h3>주력 유형</h3></div><div class="opts">${typesOf(F.actor,F.place).map(t=>{
+   const ok=unlocked(F.actor,t);const info=typeInfo(t);
+   return `<button class="pn ${F.mainType===t?'sel':'cream'}" data-act="mtype" data-arg="${esc(t)}" ${ok?'':'disabled'}><b>${esc(tlabel(t))}</b><small>${esc(rawLabel(t))}${ok?'':' · 배우 Lv '+info.tier+' 필요'}</small></button>`;}).join('')}</div></div>`;
+ }
+ const ready=F.actor&&F.place&&F.mainType;
+ const inv=nh?`<div class="sec"><div class="sech"><h3>투자</h3></div><div class="row"><div class="grow"><b style="font-family:var(--f-d)">시사회장 승급 · ${nh.name}</b><div class="small" style="color:var(--ink2)">심사위원 ${nh.seats.length}명 · 기준선 ${nh.thr}점 · 수입 ×${nh.mult}</div></div><button class="pl ${S.funds>=nh.cost?'gold':'gray'}" data-act="upgrade" ${S.funds>=nh.cost?'':'disabled'}>₡ ${fmt(nh.cost)}</button></div></div>`:'';
+ return `${header(0)}
+ <div class="main"><h2 style="text-align:center">제${S.filmNo}작 기획</h2><div class="sub">이번 시사회 심사위원의 취향입니다.</div>
+ <div class="sec">${judgeList(F)}</div>
+ <div class="sec"><div class="sech"><h3>주연</h3></div>${cardsHTML}</div>
+ ${placeHTML}${typeHTML}
+ <button class="pl gold wide" data-act="toScript" ${ready?'':'disabled'}>시나리오로 ›</button>
+ ${inv}</div>`;
+}
+
+/* ===== 화면: 시나리오 ===== */
+function genTitle(F){return fill(pick(TEXT.titles),{actor:F.actor,place:F.place,disp:tlabel(F.mainType)});}
+function viewScript(){
+ const F=R.film;
+ const ws=WRITERS.map(w=>`<button class="wc ${F.writer===w.id?'sel':''}" data-act="writer" data-arg="${w.id}" ${S.funds>=w.cost?'':'disabled'}><img src="${IM(w.im)}" alt=""><b>${esc(w.name)}</b><div class="d">${esc(w.note)}</div><div class="pr"><span>${w.cost?'₡ '+fmt(w.cost):'무료'}</span><span class="mut" style="opacity:.8">점수 +${w.bonus}</span><span class="chk"></span></div></button>`).join('');
+ const slots=slotsNow(),req=Math.ceil(slots*.6);
+ const card=F.writer?`<div class="sec"><div class="sech"><h3>시나리오 카드</h3></div><input class="in" id="titleIn" value="${esc(F.title)}" maxlength="30" aria-label="작품 제목">
+  <div class="small" style="text-align:center;color:var(--ink2)">주연 ${esc(F.actor)} · ${esc(F.place)} · 주력 ${esc(tlabel(F.mainType))}</div>
+  <div style="text-align:center">요구 조건: 편집 <b>${slots}컷</b> 중 주력 유형 <b style="color:var(--wine)">${req}컷 이상</b></div></div>`:'';
+ return `${header(1)}<div class="main"><h2 style="text-align:center">시나리오 작가 선택</h2><div class="sub">어떤 작가와 함께 이야기를 만들겠습니까?</div><div class="cards" style="grid-template-columns:1fr 1fr">${ws}</div>${card}
+ <div class="pend"><button class="pl cream" data-act="back" data-arg="plan">‹ 기획으로</button><button class="pl gold grow" data-act="toShoot" ${F.writer?'':'disabled'}>촬영 시작</button></div></div>`;
+}
+
+/* ===== 화면: 촬영 ===== */
+function doShoot(){
+ const F=R.film,n0=candsNow(F.actor);
+ const main=cutsOf(F.actor,F.place,F.mainType);
+ const others=CUTS.filter(c=>c.actor===F.actor&&c.place===F.place&&c.type!==F.mainType&&unlocked(F.actor,c.type));
+ const n=Math.min(n0,main.length+others.length);
+ const nm=Math.min(main.length,Math.ceil(n*.6));
+ let cands=shuffle(main.slice()).slice(0,nm);
+ const rest=shuffle(others.slice()).slice(0,n-cands.length);
+ cands=cands.concat(rest);
+ if(cands.length<n){const more=shuffle(main.filter(c=>!cands.includes(c))).slice(0,n-cands.length);cands=cands.concat(more);}
+ F.cands=shuffle(cands);
+ F.slots=Math.min(slotsNow(),F.cands.length);
+ F.req=Math.min(Math.ceil(F.slots*.6),F.cands.filter(c=>c.type===F.mainType).length);
+ F.edit=[];
+ R.shootReady=false;
+ setTimeout(()=>{if(R.screen==='shoot'){R.shootReady=true;render();}},1500);
+}
+function tileHTML(c,i,act,extra,dis){
+ return `<button class="cut ${S.usage[c.id]?'used':''} ${extra||''}" data-act="${act}" data-arg="${i}" ${dis?'disabled':''} aria-label="후보 컷 ${i+1}"><div class="fr">${cutHTML(c)}${S.usage[c.id]?`<span class="ctag">재사용 ×${S.usage[c.id]}</span>`:''}</div><div class="cap">제${i+1}컷</div><div class="ty">${esc(tlabel(c.type))}</div></button>`;
+}
+function viewShoot(){
+ const F=R.film;
+ if(!R.shootReady)return `${header(2)}<div class="slate"><div class="clap"></div><div class="sb"><b style="color:var(--gold)">제${S.filmNo}작</b><div style="font-family:var(--f-d);font-size:20px">${esc(F.title)}</div><div class="small" style="opacity:.8">${esc(F.actor)} · ${esc(F.place)} · ${esc(tlabel(F.mainType))}</div><div class="small" style="opacity:.8">촬영 중…</div></div></div>`;
+ const cs=F.cands.map((c,i)=>tileHTML(c,i,'noop','reveal',false).replace('class="cut','style="cursor:default" class="cut')).join('');
+ return `${header(2)}<div class="main"><h2 style="text-align:center">촬영 완료</h2><div class="sub">후보 컷 ${F.cands.length}장이 나왔습니다. 배우 Lv ${aLv(F.actor)}의 폭입니다.</div><div class="cuts">${cs}</div>
+ <button class="pl gold wide" data-act="toEdit">편집실로 ›</button></div>`;
+}
+
+/* ===== 화면: 편집 ===== */
+function viewEdit(){
+ const F=R.film;
+ const mainCount=F.edit.filter(c=>c.type===F.mainType).length;
+ const slotHTML=Array.from({length:F.slots},(_,i)=>{
+  const c=F.edit[i];
+  if(!c)return `<div class="slot"><span class="no">${i+1}</span></div>`;
+  return `<div class="slot"><span class="no">${i+1}</span>${cutHTML(c)}<button class="rm" data-act="rm" data-arg="${i}" aria-label="${i+1}번 컷 빼기"></button><div class="mv"><button data-act="mv" data-arg="${i}:-1" ${i===0?'disabled':''} aria-label="앞으로">◀</button><button data-act="mv" data-arg="${i}:1" ${i===F.edit.length-1?'disabled':''} aria-label="뒤로">▶</button></div></div>`;
+ }).join('');
+ const full=F.edit.length>=F.slots;
+ const cs=F.cands.map((c,i)=>tileHTML(c,i,'add',F.edit.includes(c)?'picked':'',F.edit.includes(c)||full)).join('');
+ const types=new Set(F.edit.map(c=>c.type)).size;
+ return `${header(3)}
+ <div class="main"><h2 style="text-align:center">${esc(F.title)}</h2>
+  <div class="meter"><span>주력 <b>${mainCount}/${F.req}</b></span><span>컷 <b>${F.edit.length}/${F.slots}</b></span><span>섞인 유형 <b>${types}</b></span></div>
+  <div class="slots">${slotHTML}</div>
+  <div class="small mut" style="text-align:center">후보를 눌러 순서대로 넣고, 컷을 누르면 뺍니다. 노란 테두리는 이미 쓴 컷입니다.</div>
+  <div class="sec"><div class="sech"><h3>심사위원 취향</h3></div>${judgeList(F)}</div>
+  <div class="sec"><div class="sech"><h3>후보 컷</h3></div><div class="cuts">${cs}</div></div>
+  <button class="pl gold wide" data-act="toShow" ${full?'':'disabled'}>시사회 시작</button></div>`;
+}
+
+/* ===== 화면: 시사회 ===== */
+const JW={3:31,4:26,5:21};
+function stageHTML(){
+ const F=R.film,n=F.judges.length,w=JW[n]||26;
+ const judges=F.judges.map(j=>`<div class="jd ${j.persona.flip?'flip':''}" data-seat="${j.seat}" style="width:${w}%"><img src="${IM(j.persona.b)}" alt=""><i class="badge g${j.grade}"></i></div>`).join('');
+ const side=s=>`<div class="dr ${s}"><img class="s0" src="${IM('c'+(s==='l'?'l':'r')+'0')}" alt=""><img class="s1" src="${IM('c'+(s==='l'?'l':'r')+'1')}" alt=""><img class="s2" src="${IM('c'+(s==='l'?'l':'r')+'2')}" alt=""></div>`;
+ const act=actorPose(F.actor,0);
+ return `<div class="theater" id="stage"><img class="val" src="${IM('val')}" alt="">
+ <div class="win off" id="screen"><div class="scr-in" id="scrIn"></div>${side('l')}${side('r')}</div>
+ <img class="bs" src="${IM('base')}" alt="">
+ <div class="hall">${judges}</div>
+ <div class="cast"><div class="cp" id="pDir"><img src="${dirImg(0)}" alt=""><span class="nmp">감독</span></div>
+ <div class="cc"><div class="say" id="sayBox"><span class="mut">상영 준비 중…</span></div><div class="dots" id="dots"></div></div>
+ <div class="cp" id="pAct">${act?`<img src="${act}" alt="">`:''}<span class="nmp">${esc(F.actor)}</span></div></div></div>`;
+}
+function viewShow(){
+ return `<div class="sc-wrap">${stageHTML()}<div class="row" style="justify-content:flex-end"><button class="pl cream" id="skipBtn" data-act="skip">건너뛰기 »</button></div><div id="after"></div></div>`;
+}
+function setPose(who,i){
+ const el=$(who==='dir'?'#pDir':'#pAct');if(!el)return;
+ const F=R.film;const src=who==='dir'?dirImg(i):(CAST[F.actor]?actorPose(F.actor,i):null);
+ const im=el.querySelector('img');if(im&&src)im.src=src;
+}
+function react(seat,r){
+ const el=document.querySelector(`.jd[data-seat="${seat}"]`);if(!el)return;
+ el.classList.remove('bob','shake','tilt','creak');void el.offsetWidth;el.classList.add(r.a);
+}
+function say(who,t){const e=$('#sayBox');if(e)e.innerHTML=`<small>${esc(who)}</small>${esc(t)}`;}
+/* 세로 이미지를 스크린 폭에 꽉 채워 위→아래 / 아래→위로 흘려 보냄 (가로 이미지는 좌우) */
+function panCut(c,idx){
+ const host=$('#scrIn');if(!host)return Promise.resolve(PAN_MS);
+ const cw=host.clientWidth,ch=host.clientHeight;
+ const slide=document.createElement('div');slide.className='slide';
+ const cap=document.createElement('span');cap.className='cap2';cap.textContent=`제${idx+1}컷`;
+ host.innerHTML='';host.appendChild(slide);
+ let el;
+ const go=(nw,nh,dur)=>{
+  const sc=Math.max(cw/nw,ch/nh),w=nw*sc,h=nh*sc;
+  el.style.width=w+'px';el.style.height=h+'px';
+  const dx=Math.min(0,cw-w),dy=Math.min(0,ch-h);
+  const rev=idx%2===1;
+  let a,b;
+  if(Math.abs(dy)>=Math.abs(dx)){a=`translate(${dx/2}px,${rev?dy:0}px)`;b=`translate(${dx/2}px,${rev?0:dy}px)`;}
+  else{a=`translate(${rev?dx:0}px,${dy/2}px)`;b=`translate(${rev?0:dx}px,${dy/2}px)`;}
+  try{el.animate([{transform:a},{transform:b}],{duration:dur,easing:'linear',fill:'forwards'});}catch(e){el.style.transform=b;}
+ };
+ return new Promise(res=>{
+  if(c.src&&c.kind==='video'){
+   /* 영상: 3.2초보다 짧으면 반복, 8초보다 길면 8초에서 끊음 */
+   el=document.createElement('video');el.className='pan';el.muted=true;el.loop=true;el.autoplay=true;el.playsInline=true;
+   el.setAttribute('playsinline','');el.setAttribute('muted','');
+   let done=false;
+   const start=()=>{if(done)return;done=true;
+    const d=isFinite(el.duration)&&el.duration>0?el.duration*1000:PAN_MS;
+    const dur=clamp(d,PAN_MS,8000);
+    go(el.videoWidth||3,el.videoHeight||4,dur);
+    try{const p=el.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}
+    res(dur);};
+   el.onloadedmetadata=start;
+   el.onerror=()=>{if(!done){done=true;go(3,4,PAN_MS);res(PAN_MS);}};
+   setTimeout(start,1500);
+   slide.appendChild(el);el.src=c.src;
+  }else if(c.src){
+   el=new Image();el.className='pan';el.alt='';
+   el.onload=()=>go(el.naturalWidth||3,el.naturalHeight||4,PAN_MS);
+   slide.appendChild(el);el.src=c.src;res(PAN_MS);
+  }else{
+   el=document.createElement('div');el.className='pan ph';el.style.setProperty('--h',hue(c.type));
+   el.innerHTML=`<b>${esc(c.actor)}</b><span>${esc(c.place)} · ${esc(tlabel(c.type))}</span><em>제${c.no}컷 · 가짜 컷</em>`;
+   slide.appendChild(el);go(3,4.6,PAN_MS);res(PAN_MS);
+  }
+  slide.appendChild(cap);
+ });
+}
+const PAN_MS=3200;
+async function runShow(){
+ const F=R.film;
+ F.res=scoreFilm(F);
+ const tok=++R.token;R.skip=false;
+ const live=()=>R.token===tok&&R.screen==='show';
+ const wait=async ms=>{if(!R.skip)await sleep(ms);};
+ await sleep(500);if(!live())return;
+ const scr=$('#screen'),dots=$('#dots');
+ dots.innerHTML=F.edit.map(()=>'<i></i>').join('');
+ scr.classList.remove('off');scr.classList.add('on');snd('tick');
+ await wait(900);
+ for(let i=0;i<F.edit.length&&!R.skip;i++){
+  if(!live())return;
+  const c=F.edit[i];
+  const ms=await panCut(c,i);if(!live())return;
+  [...dots.children].forEach((d,k)=>d.classList.toggle('on',k<=i));
+  const js=shuffle(F.judges.slice()).slice(0,Math.min(2,F.judges.length));
+  let mood=0,shown=false;
+  for(const j of js){
+   let r;
+   const used=(S.usage[c.id]||0)>0,roll=Math.random();
+   if(prefMatch(j,c)&&roll<.8)r=pick(TEXT.react.pos);
+   else if(used&&roll<.65)r=pick(TEXT.react.neg);
+   else if(F.res.total>=70&&roll<.5)r=pick(TEXT.react.pos);
+   else r=roll<.45?pick(TEXT.react.neu):pick(TEXT.react.neg);
+   mood+=TEXT.react.pos.includes(r)?1:TEXT.react.neg.includes(r)?-1:0;
+   await sleep(250*Math.random());
+   if(!live())return;
+   react(j.seat,r);
+   if(!shown){say(j.persona.name,r.t);shown=true;}
+  }
+  const pose=mood>0?1:mood<0?2:0;setPose('dir',pose);setPose('act',pose);
+  if(mood!==0&&Math.random()<.7){const isDir=Math.random()<.5;const pool=isDir?(mood>0?TEXT.dirUp:TEXT.dirDown):(mood>0?TEXT.actUp:TEXT.actDown);const line=pick(pool),nm=isDir?'감독':F.actor;setTimeout(()=>{if(live())say(nm,line);},1400);}
+  await wait(ms);
+ }
+ if(!live())return;
+ scr.classList.remove('on');scr.classList.add('off');
+ $('#skipBtn')&&($('#skipBtn').hidden=true);
+ await wait(600);
+ if(!live())return;
+ showResult();
+}
+function reactImgs(good,great){
+ const F=R.film;
+ if(great){
+  const ak=CAST[F.actor];
+  return `<div class="react cheerr"><div class="pt2"><img src="${IM(`cheer_0`)}" alt=""></div>${ak?`<div class="pt2"><img src="${IM(`cheer_${ak==='ros'?1:2}`)}" alt=""></div>`:''}</div>`;
+ }
+ const i=good?3:2;
+ const a=actorPose(F.actor,i);
+ return `<div class="react"><div class="pt2"><img src="${dirImg(i)}" alt=""></div>${a?`<div class="pt2"><img src="${a}" alt=""></div>`:''}</div>`;
+}
+function showResult(){
+ const F=R.film,r=F.res,h=HALLS[S.hall],pass=r.total>=h.thr;
+ const avg=F.judges.reduce((a,j)=>a+j.grade,0)/F.judges.length;
+ const income=Math.round(r.total*r.total/3.2*h.mult*(0.8+0.1*avg)/10)*10;
+ const gain=Math.round(r.total*.9)+(pass?10:0);
+ const aBefore=aLv(F.actor),dBefore=dLv();const openBefore=new Set(actorsList());
+ S.funds+=income;
+ A(F.actor).exp+=gain;
+ A(F.actor).uses[F.mainType]=(A(F.actor).uses[F.mainType]||0)+1;
+ S.dirExp+=10+Math.round(r.total/4);
+ for(const c of F.edit)S.usage[c.id]=(S.usage[c.id]||0)+1;
+ S.combos.push(`${F.actor}|${F.place}|${F.mainType}`);S.combos=S.combos.slice(-6);
+ S.films++;
+ if(pass)S.dignity=Math.min(100,S.dignity+(r.total>=80?20:10));
+ const aAfter=aLv(F.actor),dAfter=dLv();
+ save();
+ R.strip=!pass;
+ setPose('dir',pass?3:2);setPose('act',pass?3:2);
+ say('수석 평론가',r.total>=80?'기립은 의무입니다.':pass?'…통과입니다.':'…유감입니다.');
+ let notices='';
+ if(aAfter>aBefore){
+  const names=[...new Set(CUTS.filter(c=>c.actor===F.actor).map(c=>c.type))].filter(t=>{const ti=typeInfo(t).tier;return ti>aBefore&&ti<=aAfter;}).map(tlabel);
+  notices+=`<div class="notice"><b>배우 Lv ${aAfter}</b><br>${esc(fill(pick(TEXT.levelup),{actor:F.actor}))}${names.length?`<div class="small mut">새로 열린 유형: ${esc(names.join(', '))}</div>`:''}<div class="small mut">후보 컷 ${candsNow(F.actor)}장</div></div>`;
+ }
+ if(dAfter>dBefore){const newA=actorsList().filter(n=>!openBefore.has(n));notices+=`<div class="notice"><b>감독 Lv ${dAfter}</b><br>편집 슬롯이 ${slotsNow()}컷이 되었습니다.${newA.length?`<div class="small mut">새 배우가 합류했습니다: ${esc(newA.join(', '))}</div>`:''}</div>`;}
+ const bars=[['궁합',r.compat,23],['심사위원 취향',r.taste,25],['구성',r.comp,15],['신선도',r.fresh,15],['작가 품질',r.writer,10]]
+  .map(([k,v,m])=>`<div class="fr2"><span>${k}</span><div class="gbar" style="height:8px"><i style="width:${Math.round(v/m*100)}%"></i></div><b>${Math.round(v)}</b></div>`).join('')
+  +`<div class="fr2"><span>운</span><div></div><b>${r.luck>0?'+':''}${r.luck}</b></div>`;
+ const lines=reviewLines(F,r).map((l,i)=>`<div class="quote" style="animation-delay:${i*900}ms">${esc(l.t)}<small>${l.s?esc(l.s)+' · ':''}수석 평론가</small></div>`).join('');
+ const ml=`<div class="sec"><div class="quote" style="animation-delay:${F.edit?2700:0}ms">${esc(pick(pass?TEXT.moneyDir.pass:TEXT.moneyDir.fail))}<small>감독</small></div><div class="quote" style="animation-delay:3600ms">${esc(pick(pass?TEXT.moneyAct.pass:TEXT.moneyAct.fail))}<small>${esc(F.actor)}</small></div></div>`;
+ const next=pass?`<button class="pl gold wide" data-act="next">다음 작품 ›</button>`:`<button class="pl wine wide" data-act="penalty">책임 정산으로 ›</button>`;
+ $('#after').innerHTML=`<div class="main reveal"><div class="row"><div class="big">${r.total}</div><div class="grow"><h2>${esc(F.title)}</h2><div>평가 <b style="color:var(--wine)">${r.band}</b> · 기준선 ${h.thr}점 <b class="${pass?'pass':'fail'}">${pass?'통과':'미달'}</b></div></div></div>
+ ${reactImgs(pass,r.total>=80)}
+ <div class="sec">${bars}</div><hr style="border:0;border-top:1px solid var(--gold-d);width:100%;margin:0">
+ <div>흥행 수입 <b style="color:var(--wine)">₡ ${fmt(income)}</b> · 배우 경험치 +${gain}${r.spec?' · 전문 배우 가산':''}</div>
+ <div class="sec">${lines}</div>${ml}${notices}${next}</div>`;
+ $('#after').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ===== 화면: 책임 정산 ===== */
+function startPenalty(){
+ const F=R.film;
+ const ex=[...F.judges].sort((a,b)=>b.grade-a.grade)[0];
+ const base=clamp(2+Math.ceil(Math.max(0,HALLS[S.hall].thr-F.res.total)/3),2,10);
+ const rounds=Math.max(2,base-Math.min(3,Math.floor(S.hits/12)));
+ R.pen={ex,rounds,cost:400+rounds*120};
+ R.screen='penIntro';render();
+}
+function execBox(t){const P=R.pen;return `<div class="exec">${jpHTML(P.ex.persona)}<div class="say2"><small>${esc(P.ex.persona.name)}</small>${t}</div></div>`;}
+function viewPenIntro(){
+ const P=R.pen;
+ return `${header(null)}<div class="main"><h2 style="text-align:center">책임 정산</h2>
+ ${execBox('“'+esc(TEXT.exec.start)+'”')}
+ <div class="fimg"><img src="${dirImg(0)}" alt="">${actorPose(R.film.actor,0)&&CAST[R.film.actor]?`<img src="${actorPose(R.film.actor,0)}" alt="">`:''}</div>
+ <div style="text-align:center">평점 ${R.film.res.total}점으로 기준선에 미달했습니다. <b style="color:var(--wine)">대수 ${P.rounds}</b>가 선고되었습니다.</div>
+ <div class="small mut" style="text-align:center">왼쪽 박자에 맞춰 버티기, 오른쪽 박자에 맞춰 스쿼트. 잘 버티면 대수가 깎이고 놓치면 늘어납니다.</div>
+ <div class="pend"><button class="pl wine grow" data-act="penStart">정산 받기</button><button class="pl ${S.funds>=P.cost?'gold':'gray'} grow" data-act="exempt" ${S.funds>=P.cost?'':'disabled'}>면제권 ₡ ${fmt(P.cost)}</button></div></div>`;
+}
+function bowImg(who){ // 서 있는 자세 / 맞는 자세 이미지
+ const F=R.film;
+ if(who==='dir')return {n:IM('bow_0'),h:IM('hit_0')};
+ const k=CAST[F.actor];if(!k)return null;
+ const i=k==='ros'?1:2;return {n:IM(`bow_${i}`),h:IM(`hit_${i}`)};
+}
+function viewPenPlay(){
+ const P=R.pen,bd=bowImg('dir'),ba=bowImg('act');
+ return `<div class="pstage" id="pstage">
+ ${execBox(`<span id="say">${esc(TEXT.exec.start)}</span>`)}
+ <div class="phud"><span>남은 대수 <b id="hRem">${P.rounds}</b></span><span>연기 점수 <b id="hAct">0</b></span><span>존엄 <b id="hDig">${S.dignity}</b></span></div>
+ <div class="lanes"><div class="lane L" id="laneL"><span class="lt">감독 · 버티기</span><img class="chara" id="chL" src="${bd.n}" alt=""><div class="hitline"></div></div>
+ <div class="lane R" id="laneR"><span class="lt">${esc(R.film.actor)} · 스쿼트</span>${ba?`<img class="chara" id="chR" src="${ba.n}" alt="">`:''}<div class="hitline"></div></div></div>
+ <div class="pads"><button class="pl wine pad" id="padL">버티기</button><button class="pl gold pad" id="padR">스쿼트</button></div>
+ <div id="choiceHost"></div></div>`;
+}
+function say2(t,b){const e=$('#say');if(e)e.innerHTML=esc(t)+(b?`<small style="display:block">감독: ${esc(b)}</small>`:'');}
+function poseSwap(id,which,ms){
+ const el=$(id);if(!el)return;const b=id==='#chL'?bowImg('dir'):bowImg('act');if(!b)return;
+ el.src=which==='hit'?b.h:b.n;clearTimeout(el._t);if(which==='hit')el._t=setTimeout(()=>{el.src=b.n;},ms||380);
+}
+function runPenalty(){
+ const P=R.pen;
+ Object.assign(P,{T:820,remain:P.rounds,spawned:0,half:Math.ceil(P.rounds/2),nextT:performance.now()+1500,notes:[],acting:0,stage:0,dmg:0,hits:0,perf:0,miss:0,paused:false,midDone:false,over:false,serv:0,earned:0,phase:'play'});
+ const hostL=()=>$('#laneL'),hostR=()=>$('#laneR');
+ function addNote(lane,t){
+  const el=document.createElement('div');el.className='note';el.textContent=lane==='L'?'타':'굽혀';
+  (lane==='L'?hostL():hostR()).appendChild(el);
+  P.notes.push({lane,t,el,done:false});
+ }
+ function fx(text,cls,lane){
+  const h=lane==='L'?hostL():hostR();if(!h)return;
+  const s=document.createElement('span');s.className='fx '+cls;s.textContent=text;h.appendChild(s);setTimeout(()=>s.remove(),700);
+ }
+ function hud(){
+  const pend=P.notes.filter(n=>n.lane==='L'&&!n.done).length;
+  const r=$('#hRem');if(r)r.textContent=Math.max(0,Math.ceil(P.remain))+pend;
+  const a=$('#hAct');if(a)a.textContent=P.acting;
+  const d=$('#hDig');if(d)d.textContent=clamp(S.dignity-P.dmg,0,100);
+ }
+ function shake(){const s=$('#pstage');if(!s)return;s.classList.remove('shake');void s.offsetWidth;s.classList.add('shake');}
+ function resolve(n,kind){
+  n.done=true;n.el.classList.add(kind);setTimeout(()=>n.el.remove(),320);
+  if(n.lane==='L'){
+   P.hits++;const big=P.stage>=1?1:.5;
+   if(kind==='perfect'){P.perf++;P.remain-=big;fx('버텼다','ok','L');snd('ding');vib(200);}
+   else if(kind==='good'){P.dmg+=2;fx('윽','warn','L');snd('thud');vib(450);shake();poseSwap('#chL','hit');if(Math.random()<.5)say2(pick(TEXT.exec.hit),pick(TEXT.dirBeg));}
+   else{P.miss++;P.dmg+=5;P.remain=Math.min(P.rounds+3,P.remain+big);fx('쿵','bad','L');snd('thud');vib(900);shake();poseSwap('#chL','hit',520);say2(pick(TEXT.exec.hit),pick(TEXT.dirBeg));}
+  }else{
+   if(kind==='perfect'){P.acting+=3;fx('열연','ok','R');snd('tick');vib(250);poseSwap('#chR','hit',260);}
+   else if(kind==='good'){P.acting+=1;fx('좋아요','warn','R');snd('tick');vib(200);}
+   else{P.acting=Math.max(0,P.acting-1);fx('휘청','bad','R');snd('miss');}
+   if(P.stage===0&&P.acting>=8){P.stage=1;P.T*=.88;say2(TEXT.exec.boost);}
+   else if(P.stage===1&&P.acting>=20){P.stage=2;P.T*=.88;say2(TEXT.exec.boost);}
+  }
+  hud();
+ }
+ R.press=lane=>{
+  if(!R.pen||R.pen.phase!=='play'||P.over)return;
+  const pad=$(lane==='L'?'#padL':'#padR');if(pad){pad.classList.add('hit');setTimeout(()=>pad.classList.remove('hit'),90);}
+  const now=performance.now();let best=null;
+  for(const n of P.notes){if(n.lane!==lane||n.done)continue;const d=Math.abs(now-n.t);if(d<=200&&(!best||d<best.d))best={n,d};}
+  if(best)resolve(best.n,best.d<=90?'perfect':'good');
+ };
+ function finish(){
+  if(P.over)return;P.over=true;
+  const F=R.film;
+  const before=aLv(F.actor);
+  S.dignity=clamp(S.dignity-P.dmg,0,100);
+  S.hits+=P.hits;
+  A(F.actor).exp+=P.acting*2;
+  save();
+  const after=aLv(F.actor);
+  P.sum={dmg:P.dmg,hits:P.hits,perf:P.perf,miss:P.miss,acting:P.acting,serv:P.serv,earned:P.earned,lvUp:after>before?after:0};
+  setTimeout(()=>{R.screen='penDone';render();},500);
+ }
+ function showChoice(){
+  P.phase='choice';
+  const canServe=S.dignity-P.dmg>=20;
+  const host=$('#choiceHost');if(!host)return;
+  host.innerHTML=`<div class="overlay"><div class="in2"><div class="main"><h2 style="text-align:center">선택</h2>${execBox('“감독님, 잠시 선택지를 드리겠습니다.”')}
+   <button class="pl cream wide" data-act="penChoice" data-arg="hold"><span><b>버티기</b><br><span class="small" style="opacity:.8">존엄을 지킵니다. 남은 대수는 그대로입니다.</span></span></button>
+   <button class="pl wine wide" data-act="penChoice" data-arg="serve" ${canServe?'':'disabled'}><span><b>굴종</b><br><span class="small">존엄 −20 · ₡ ${fmt(P.ex.grade*150)} 수령 · 남은 대수 절반</span></span></button></div></div></div>`;
+ }
+ R.choose=which=>{
+  const host=$('#choiceHost');if(host)host.innerHTML='';
+  if(which==='serve'){S.dignity=clamp(S.dignity-20,0,100);S.funds+=P.ex.grade*150;P.earned+=P.ex.grade*150;P.serv=1;P.remain=Math.ceil(P.remain/2);say2('흡족합니다. 나머지는 서둘러 마무리하겠습니다.');}
+  else say2(TEXT.exec.hold);
+  save();hud();
+  P.midDone=true;P.paused=false;P.phase='play';P.nextT=performance.now()+1100;
+ };
+ const frame=now=>{
+  if(!R.pen||R.pen!==P||R.screen!=='penPlay')return;
+  const L=hostL();if(!L){requestAnimationFrame(frame);return;}
+  const H=L.clientHeight,maxY=H-HIT_TOP-26;
+  if(P.phase==='play'&&!P.paused){
+   while(P.remain>=1&&P.nextT-FALL<=now){
+    addNote('L',P.nextT);addNote('R',P.nextT+P.T/2);P.remain-=1;P.spawned++;P.nextT+=P.T;
+    if(!P.midDone&&P.spawned>=P.half&&P.rounds>=2){P.paused=true;break;}
+   }
+  }
+  let pending=0;
+  for(const n of P.notes){
+   if(n.done)continue;pending++;
+   const p=1-(n.t-now)/FALL;
+   n.el.style.transform=`translateY(${clamp(p,0,1.12)*maxY}px)`;
+   if(now>n.t+200)resolve(n,'miss');
+  }
+  P.notes=P.notes.filter(n=>!n.done||now-n.t<600);
+  if(P.paused&&P.phase==='play'&&pending===0&&!P.midDone)showChoice();
+  if(!P.paused&&P.remain<1&&pending===0&&P.phase==='play')finish();
+  if(!P.over)requestAnimationFrame(frame);
+ };
+ const bind=(id,lane)=>{const el=$(id);if(!el)return;el.addEventListener('pointerdown',e=>{e.preventDefault();R.press(lane);});};
+ bind('#padL','L');bind('#padR','R');
+ requestAnimationFrame(frame);
+ hud();
+}
+function viewPenDone(){
+ const P=R.pen,s=P.sum||{dmg:0,hits:0,perf:0,miss:0,acting:0,serv:0,earned:0,lvUp:0},ex=!!P.exempted,F=R.film;
+ const ak=CAST[F.actor];
+ const imgs=ex
+  ?`<div class="fimg"><img src="${IM('run_0')}" alt="">${ak?`<img src="${IM('run_'+(ak==='ros'?1:2))}" alt="">`:''}</div>`
+  :`<div class="fimg"><img src="${IM('bow_0')}" alt="">${ak?`<img src="${IM('bow_'+(ak==='ros'?1:2))}" alt="">`:''}</div>`;
+ return `${header(null)}<div class="main"><h2 style="text-align:center">${ex?'정산 면제':'정산 종료'}</h2>
+ ${execBox('“'+esc(ex?TEXT.exec.exempt:TEXT.exec.end)+'”')}${imgs}
+ ${ex?`<div style="text-align:center">면제권 ₡ ${fmt(P.cost)}를 지불했습니다.</div>`:`<div style="text-align:center">버틴 박자 ${s.perf}회 · 놓친 박자 ${s.miss}회<br>존엄 −${s.dmg}${s.serv?' · 굴종 수령 ₡ '+fmt(s.earned):''}<br>연기 점수 ${s.acting} → 배우 경험치 +${s.acting*2}${s.lvUp?` (Lv ${s.lvUp} 달성)`:''}<div class="small mut">맷집 +${s.hits}타</div></div>`}
+ <button class="pl gold wide" data-act="next">다음 작품 ›</button></div>`;
+}
+
+function faceOverlay(){
+ const a=R.faceFor;if(!a)return '';
+ const cs=CUTS.filter(c=>c.actor===a&&c.src&&c.kind!=='video');
+ const cur=(S.faces||{})[a];
+ const body=cs.length?`<div class="cuts">${cs.map(c=>`<button class="cut ${cur===c.id?'cur':''}" data-act="faceSet" data-arg="${esc(c.id)}"><div class="fr"><img src="${esc(c.src)}" alt="" loading="lazy" decoding="async"></div><div class="ty">${esc(tlabel(c.type))}</div></button>`).join('')}</div>`:`<div class="notice">고를 수 있는 그림이 없습니다. 제목 화면에서 폴더를 먼저 불러와 주세요.</div>`;
+ return `<div class="overlay"><div class="in2"><div class="main"><h2 style="text-align:center">${esc(a)} 얼굴 고르기</h2><div class="sub">한 장을 누르면 초상화가 됩니다.</div>${body}<div class="pend"><button class="pl wine grow" data-act="faceReset">원래대로</button><button class="pl cream grow" data-act="faceClose">닫기</button></div></div></div></div>`;
+}
+/* ===== 렌더 ===== */
+let lastScreen='';
+function render(){
+ const sc=R.screen;
+ let h='';
+ if(sc==='title')h=viewTitle();
+ else if(sc==='plan')h=viewPlan();
+ else if(sc==='script')h=viewScript();
+ else if(sc==='shoot')h=viewShoot();
+ else if(sc==='edit')h=viewEdit();
+ else if(sc==='show')h=viewShow();
+ else if(sc==='penIntro')h=viewPenIntro();
+ else if(sc==='penPlay')h=viewPenPlay();
+ else if(sc==='penDone')h=viewPenDone();
+ app().innerHTML=h;
+ if(R.faceFor)app().insertAdjacentHTML('beforeend',faceOverlay());
+ const cp=$('#cardpages');
+ if(cp&&$('#pgdots')){let x0=null;cp.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});cp.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50){const b=document.querySelector(`[data-act=cpage][data-arg="${dx<0?1:-1}"]:not([disabled])`);if(b)b.click();}},{passive:true});}
+ if(sc!==lastScreen){window.scrollTo(0,0);lastScreen=sc;}
+ if(sc==='show'&&!R.showStarted){R.showStarted=true;runShow();}
+ if(sc!=='show')R.showStarted=false;
+ if(sc==='penPlay')runPenalty();
+}
+function go(sc){R.screen=sc;render();}
+function nextFilm(){S.filmNo++;save();newFilm();go('plan');}
+
+/* ===== 이벤트 ===== */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+ const act=b.dataset.act,arg=b.dataset.arg,F=R.film;
+ if(act==='cont'){newFilm();go('plan');}
+ else if(act==='new'){const keepFaces=S.faces||{};Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,fresh());S.faces=keepFaces;save();newFilm();go('plan');}
+ else if(act==='folder'){try{$('#dir').value='';}catch(x){}$('#dir').click();}
+ else if(act==='cpage'){R.cardPage=(R.cardPage||0)+(+arg);render();}
+ else if(act==='portrait'){if(F.actor===arg){R.faceFor=arg;render();}else{F.actor=arg;F.place=null;F.mainType=null;render();}}
+ else if(act==='face'){R.faceFor=arg;render();}
+ else if(act==='faceSet'){(S.faces=S.faces||{})[R.faceFor]=arg;save();R.faceFor=null;render();}
+ else if(act==='faceReset'){if(S.faces)delete S.faces[R.faceFor];save();R.faceFor=null;render();}
+ else if(act==='faceClose'){R.faceFor=null;render();}
+ else if(act==='actor'){F.actor=arg;F.place=null;F.mainType=null;render();}
+ else if(act==='place'){F.place=arg;F.mainType=null;render();}
+ else if(act==='mtype'){F.mainType=arg;render();}
+ else if(act==='upgrade'){const nh=HALLS[S.hall+1];if(nh&&S.funds>=nh.cost){S.funds-=nh.cost;S.hall++;F.judges=rollJudges();save();toast(`${nh.name}으로 승급했습니다.`);render();}}
+ else if(act==='toScript'){F.writer=null;F.title='';go('script');}
+ else if(act==='writer'){F.writer=arg;F.title=genTitle(F);render();}
+ else if(act==='back'){go(arg);}
+ else if(act==='toShoot'){const w=WRITERS.find(x=>x.id===F.writer);if(S.funds<w.cost)return;S.funds-=w.cost;save();R.screen='shoot';doShoot();render();}
+ else if(act==='toEdit'){go('edit');}
+ else if(act==='add'){const c=F.cands[+arg];if(c&&!F.edit.includes(c)&&F.edit.length<F.slots){F.edit.push(c);snd('tick');render();}}
+ else if(act==='rm'){F.edit.splice(+arg,1);render();}
+ else if(act==='mv'){const [i,d]=arg.split(':').map(Number),j=i+d;if(j>=0&&j<F.edit.length){[F.edit[i],F.edit[j]]=[F.edit[j],F.edit[i]];render();}}
+ else if(act==='toShow'){if(F.edit.length>=F.slots)go('show');}
+ else if(act==='skip'){R.skip=true;}
+ else if(act==='penalty'){startPenalty();}
+ else if(act==='penStart'){R.pen.phase='play';go('penPlay');}
+ else if(act==='exempt'){const P=R.pen;if(S.funds>=P.cost){S.funds-=P.cost;P.exempted=true;save();vib(300);go('penDone');}}
+ else if(act==='penChoice'){if(R.choose)R.choose(arg);}
+ else if(act==='next'){nextFilm();}
+});
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='titleIn'&&R.film)R.film.title=e.target.value;});
+const dirInput=$('#dir');
+if(dirInput)dirInput.addEventListener('change',e=>{handleFolder(Array.from(e.target.files||[]));});
+
+if(typeof globalThis.__USE_TEST!=='undefined')globalThis.__USE_T={S,R,TEXT,CUTS:()=>CUTS,newFilm,doShoot,scoreFilm,reviewLines,rollJudges,aLv,dLv,unlocked,typesOf,placesOf,actorsList,HALLS,WRITERS,slotsNow,candsNow,normType};
+render();
+})();
+</script>
