@@ -35,7 +35,11 @@ import org.json.JSONObject;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "UseCinema";
+    // 자동 업데이트: 켤 때마다 인터넷의 최신 게임을 불러오고, 안 되면 앱 안에 든 게임으로 실행
+    private static final String REMOTE = "https://alix1211.github.io/my-cinema/";
     private static final String LOCAL = "https://appassets.androidplatform.net/assets/index.html";
+    private boolean usingLocal = false, remoteOk = false;
+    private void loadLocal() { if (usingLocal) return; usingLocal = true; if (game != null) game.loadUrl(LOCAL); }
     private static final String MEDIA = "https://appassets.androidplatform.net/media/";
     private static final int REQ_TREE = 601;
 
@@ -74,6 +78,15 @@ public final class MainActivity extends Activity {
                 if (u != null && u.toString().startsWith(MEDIA)) return serveMedia(u, r.getRequestHeaders());
                 return loader.shouldInterceptRequest(u);
             }
+            @Override public void onReceivedError(WebView v, WebResourceRequest r, android.webkit.WebResourceError e) {
+                if (r.isForMainFrame() && !usingLocal) ui.post(MainActivity.this::loadLocal);
+            }
+            @Override public void onReceivedHttpError(WebView v, WebResourceRequest r, WebResourceResponse e) {
+                if (r.isForMainFrame() && !usingLocal) ui.post(MainActivity.this::loadLocal);
+            }
+            @Override public void onPageFinished(WebView v, String url) {
+                if (url != null && url.startsWith(REMOTE)) remoteOk = true;
+            }
             @Override public boolean onRenderProcessGone(WebView v, RenderProcessGoneDetail d) {
                 Toast.makeText(MainActivity.this, "화면 엔진이 멈춰 다시 시작합니다", Toast.LENGTH_LONG).show();
                 recreate();
@@ -82,7 +95,8 @@ public final class MainActivity extends Activity {
         });
         game.addJavascriptInterface(new Bridge(), "CinemaBridge");
         setContentView(game);
-        game.loadUrl(LOCAL);
+        game.loadUrl(REMOTE + "index.html");
+        ui.postDelayed(() -> { if (!remoteOk) loadLocal(); }, 15000);   // 15초 안에 못 받으면 앱 안의 게임으로
     }
 
     private void hideBars() {
@@ -252,5 +266,10 @@ public final class MainActivity extends Activity {
         }
         @JavascriptInterface public void scan() { MainActivity.this.scan(); }
         @JavascriptInterface public String getList() { return listJson; }
+        // 저장: 게임을 인터넷판으로 켜든 앱 안의 판으로 켜든 같은 저장을 쓰도록 앱이 직접 보관
+        @JavascriptInterface public String loadSave() { return prefs.getString("save", ""); }
+        @JavascriptInterface public void saveSave(String json) {
+            if (json != null && json.length() > 1 && json.length() < 8000000) prefs.edit().putString("save", json).apply();
+        }
     }
 }

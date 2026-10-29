@@ -395,8 +395,8 @@ const IM=n=>`a/${n}.webp`;
 /* ===== 저장 상태 ===== */
 const KEY='use-cinema-v1';
 const fresh=()=>({faces:{},funds:1000,hall:0,dirExp:0,dignity:100,hits:0,filmNo:1,films:0,actors:{},usage:{},combos:[]});
-function loadSave(){try{const j=localStorage.getItem(KEY);return j?JSON.parse(j):null;}catch(e){return null;}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function loadSave(){try{const B=window.CinemaBridge;let j=B&&B.loadSave?B.loadSave():'';if(!j)j=localStorage.getItem(KEY);return j?JSON.parse(j):null;}catch(e){return null;}}
+function save(){let t;try{t=JSON.stringify(S);}catch(e){return;}try{const B=window.CinemaBridge;if(B&&B.saveSave)B.saveSave(t);}catch(e){}try{localStorage.setItem(KEY,t);}catch(e){}}
 const saved=loadSave();
 const S=Object.assign(fresh(),saved||{});
 const hasSave=!!saved;
