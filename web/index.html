@@ -87,7 +87,8 @@ border-style:solid;border-width:12px;border-image:url(a/panel_06.webp) 36 fill/1
 .wc:disabled{filter:grayscale(1) brightness(.85);cursor:not-allowed}
 .wc img{width:100%;aspect-ratio:1/.8;object-fit:cover;object-position:50% 25%;border-radius:4px}
 .wc b{font:800 14px var(--f-d)}.wc .d{font-size:11px;line-height:1.35;opacity:.85}
-.wc .pr{display:flex;align-items:center;gap:6px;font:700 13px var(--f-b);white-space:nowrap}
+.wc{min-width:0}.card{min-width:0}
+.wc .pr{display:flex;align-items:center;flex-wrap:wrap;gap:2px 6px;font:700 13px var(--f-b)}.wc .pr span{white-space:nowrap}
 /* ===== 컷 타일 ===== */
 .cuts{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
 .cut{position:relative;display:flex;flex-direction:column;gap:2px;padding:0;background:none;border:0;color:var(--ink);font:inherit;cursor:pointer;text-align:center;touch-action:manipulation}
@@ -652,7 +653,7 @@ function viewScript(){
  const card=F.writer?`<div class="sec"><div class="sech"><h3>시나리오 카드</h3></div><input class="in" id="titleIn" value="${esc(F.title)}" maxlength="30" aria-label="작품 제목">
   <div class="small" style="text-align:center;color:var(--ink2)">주연 ${esc(F.actor)} · ${esc(F.place)} · 주력 ${esc(tlabel(F.mainType))}</div>
   <div style="text-align:center">요구 조건: 편집 <b>${slots}컷</b> 중 주력 유형 <b style="color:var(--wine)">${req}컷 이상</b></div></div>`:'';
- return `${header(1)}<div class="main"><h2 style="text-align:center">시나리오 작가 선택</h2><div class="sub">어떤 작가와 함께 이야기를 만들겠습니까?</div><div class="cards" style="grid-template-columns:1fr 1fr">${ws}</div>${card}
+ return `${header(1)}<div class="main"><h2 style="text-align:center">시나리오 작가 선택</h2><div class="sub">어떤 작가와 함께 이야기를 만들겠습니까?</div><div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">${ws}</div>${card}
  <div class="pend"><button class="pl cream" data-act="back" data-arg="plan">‹ 기획으로</button><button class="pl gold grow" data-act="toShoot" ${F.writer?'':'disabled'}>촬영 시작</button></div></div>`;
 }
 
