@@ -503,9 +503,9 @@ const CAST={'로지로프':'ros','초선':'cho'};
 const DIRK='dir';
 const NPOS=['hit','bow','run','cheer'];
 const HALLS=[
- {name:'소극장',seats:[1,2,3],grades:[1,1,2],thr:64,mult:1,cost:0},
- {name:'중극장',seats:[0,1,2,3],grades:[1,2,2,3],thr:69,mult:1.8,cost:6000},
- {name:'대극장',seats:[0,1,2,3,4],grades:[2,3,3,4,5],thr:72,mult:3.2,cost:18000}
+ {name:'소극장',seats:[1,2,3],grades:[1,1,2],thr:58,mult:1,cost:0},
+ {name:'중극장',seats:[0,1,2,3],grades:[1,2,2,3],thr:63,mult:1.8,cost:6000},
+ {name:'대극장',seats:[0,1,2,3,4],grades:[2,3,3,4,5],thr:66,mult:3.2,cost:18000}
 ];
 const WRITERS=[
  {id:'self',name:'감독 본인',note:'가장 잘 아는 이야기, 직접 씁니다.',cost:0,bonus:0,im:'w_0'},
@@ -919,9 +919,9 @@ const LINES_F=['감독이 병신이니까 이 꼴이지!','엉덩이 대! 책임
 const HARD_M=[],HARD_F=[];
 const isFem=j=>j.persona.f==='jf_1';
 const SQ={on:false};
-const VOL=(()=>{let v={mus:.7,sfx:1,lag:100};try{const j=JSON.parse(localStorage.getItem('use_vol')||'null');if(j){if(typeof j.mus==='number')v.mus=Math.min(1,Math.max(0,j.mus));if(typeof j.sfx==='number')v.sfx=Math.min(1,Math.max(0,j.sfx));if(typeof j.lag==='number')v.lag=Math.min(300,Math.max(0,j.lag));}}catch(e){}return v;})();
-const saveVol=()=>{try{localStorage.setItem('use_vol',JSON.stringify(VOL));}catch(e){}};
-const acx=()=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();}catch(e){}return AC;};
+const VOL=(()=>{let v={mus:.7,sfx:1,lag:130,auto:true};try{const j=JSON.parse(localStorage.getItem('use_vol')||'null');if(j){if(typeof j.mus==='number')v.mus=Math.min(1,Math.max(0,j.mus));if(typeof j.sfx==='number')v.sfx=Math.min(1,Math.max(0,j.sfx));if(typeof j.lag==='number'&&j.lagUser){v.lag=Math.min(300,Math.max(0,j.lag));v.auto=false;}}}catch(e){}return v;})();
+const saveVol=()=>{try{localStorage.setItem('use_vol',JSON.stringify({mus:VOL.mus,sfx:VOL.sfx,lag:VOL.lag,lagUser:!VOL.auto}));}catch(e){}};
+const acx=()=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();if(VOL.auto){const ol=((AC.outputLatency||0)+(AC.baseLatency||0))*1000;if(ol>=20)VOL.lag=Math.min(300,Math.max(60,Math.round(ol/10)*10));}}catch(e){}return AC;};
 const SNDBUF={};
 async function loadSnd(n){
  if(n in SNDBUF)return SNDBUF[n];
@@ -1275,7 +1275,7 @@ setTimeout(function setupSound(){try{
  document.body.appendChild(p);
  const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs'),rl=p.querySelector('#rl'),vl=p.querySelector('#vl');
  const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';rl.value=VOL.lag;vl.textContent=VOL.lag+'ms';};
- rl.oninput=()=>{VOL.lag=+rl.value;vl.textContent=VOL.lag+'ms';saveVol();};
+ rl.oninput=()=>{VOL.auto=false;VOL.lag=+rl.value;vl.textContent=VOL.lag+'ms';saveVol();};
  rm.oninput=()=>{VOL.mus=rm.value/100;vm.textContent=rm.value+'%';saveVol();applyVol();};
  rs.oninput=()=>{VOL.sfx=rs.value/100;vs.textContent=rs.value+'%';saveVol();};
  rs.onchange=()=>{try{acx();loadSnd('hit_punch').then(()=>playBuf('hit_punch',.9));}catch(e){}};

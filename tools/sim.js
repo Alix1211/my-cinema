@@ -54,7 +54,9 @@ const out=await p.evaluate(()=>{
  for(const hall of [0,1,2])for(const st of ['care','decent','skill']){
   const v=[];for(let i=0;i<400;i++)v.push(trial(st,hall));v.sort((a,b)=>a-b);
   const q=x=>v[Math.floor(x*(v.length-1))];
-  res[hall+'/'+st]={mean:Math.round(v.reduce((a,b)=>a+b,0)/v.length),p10:q(.1),p50:q(.5),p90:q(.9)};
+  const thr=[64,69,72][hall],o={mean:Math.round(v.reduce((a,b)=>a+b,0)/v.length)};
+  for(const sc of [3,5,7,9]){for(const dt of [0,-6,-10]){o['s'+sc+'/t'+(thr+dt)]=Math.round(100*v.filter(x=>x+sc>=thr+dt).length/v.length);}}
+  res[hall+'/'+st]=o;
  }
  return res;
 });
