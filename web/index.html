@@ -506,7 +506,7 @@ const NPOS=['hit','bow','run','cheer'];
 const HALLS=[
  {name:'소극장',seats:[1,2,3],grades:[1,1,2],thr:64,mult:1,cost:0},
  {name:'중극장',seats:[0,1,2,3],grades:[1,2,2,3],thr:69,mult:1.8,cost:6000},
- {name:'대극장',seats:[0,1,2,3,4],grades:[2,3,3,4,5],thr:74,mult:3.2,cost:18000}
+ {name:'대극장',seats:[0,1,2,3,4],grades:[2,3,3,4,5],thr:72,mult:3.2,cost:18000}
 ];
 const WRITERS=[
  {id:'self',name:'감독 본인',note:'가장 잘 아는 이야기, 직접 씁니다.',cost:0,bonus:0,im:'w_0'},
@@ -627,10 +627,20 @@ const candsNow=n=>8+2*aLv(n);
 /* ===== 심사위원 ===== */
 function rollJudges(){
  const h=HALLS[S.hall];const grades=shuffle(h.grades.slice());const lenses=shuffle(['art','bold','love']);
+ /* 심사위원 취향: 작품마다 '한 배우의 한 상황'을 정해 두고, 과반(3명=2명, 4~5명=3명)은 그 안에서 말합니다.
+    나머지는 제멋대로(변수). 상황은 장소/유형을 섞어서. */
+ const n=h.seats.length,core=n<=3?2:3;
+ const A0=pick(actorsList());
+ const sit=Math.random()<.5?{kind:'place',value:pick(allPlaces())}:{kind:'type',value:pick(allTypes())};
+ const prefs=[{kind:'actor',value:A0},{kind:sit.kind,value:sit.value}];
+ if(core>2)prefs.push(Math.random()<.5?{kind:'actor',value:A0}:{kind:sit.kind,value:sit.value});
+ while(prefs.length<n){const kind=pick(['actor','place','type']);prefs.push({kind,value:kind==='actor'?pick(actorsList()):kind==='place'?pick(allPlaces()):pick(allTypes())});}
+ const mixed=prefs.slice(0,core).concat(shuffle(prefs.slice(core)));
+ const order=shuffle(mixed.map((_,i)=>i));
+ const P=order.map(i=>mixed[i]);
  return h.seats.map((seat,i)=>{
-  const kind=pick(['actor','place','type']);const lens=lenses[i%3];
-  const value=kind==='actor'?pick(actorsList()):kind==='place'?pick(allPlaces()):pick(allTypes());
-  return {seat,persona:PERSONAS[seat],grade:grades[i],lens,pref:{kind,value}};
+  const lens=lenses[i%3];
+  return {seat,persona:PERSONAS[seat],grade:grades[i],lens,pref:P[i]};
  });
 }
 function hint(j){
