@@ -919,14 +919,25 @@ const LINES_F=['감독이 병신이니까 이 꼴이지!','엉덩이 대! 책임
 const HARD_M=[],HARD_F=[];
 const isFem=j=>j.persona.f==='jf_1';
 const SQ={on:false};
+const VOL=(()=>{let v={mus:.7,sfx:1};try{const j=JSON.parse(localStorage.getItem('use_vol')||'null');if(j){if(typeof j.mus==='number')v.mus=Math.min(1,Math.max(0,j.mus));if(typeof j.sfx==='number')v.sfx=Math.min(1,Math.max(0,j.sfx));}}catch(e){}return v;})();
+const saveVol=()=>{try{localStorage.setItem('use_vol',JSON.stringify(VOL));}catch(e){}};
+const acx=()=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();}catch(e){}return AC;};
 const SNDBUF={};
 async function loadSnd(n){
  if(n in SNDBUF)return SNDBUF[n];
  try{const r=await fetch('a/snd/'+n+'.ogg');const b=await r.arrayBuffer();SNDBUF[n]=await new Promise((ok,no)=>AC.decodeAudioData(b,ok,no));}catch(e){SNDBUF[n]=null;}
  return SNDBUF[n];
 }
-function playBuf(n,vol){try{const b=SNDBUF[n];if(!b||!AC)return;const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;g.gain.value=vol;s.connect(g).connect(AC.destination);s.start(0);}catch(e){}}
-function stopAudio(){(SQ.srcs||[]).forEach(s=>{try{s.stop();}catch(e){}});SQ.srcs=[];}
+function playBuf(n,vol){try{const b=SNDBUF[n];if(!b||!AC)return;const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;g.gain.value=vol*VOL.sfx;s.connect(g).connect(AC.destination);s.start(0);}catch(e){}}
+/* 시사회 밖 모든 장면의 배경음악(클래식) — 시사회에 들어가면 멈추고 끝나면 이어집니다 */
+const Mus={src:null,g:null,hold:false,
+ async play(){if(this.src||this.hold)return;if(!acx())return;const b=await loadSnd('bgm_main');if(!b||this.src||this.hold)return;
+  try{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g.gain.value=1.3*VOL.mus;s.connect(g).connect(AC.destination);s.start(0);this.src=s;this.g=g;}catch(e){}},
+ pause(){this.hold=true;if(this.src){try{this.src.stop();}catch(e){}this.src=null;this.g=null;}},
+ resume(){this.hold=false;this.play();},
+ setVol(){if(this.g)this.g.gain.value=1.3*VOL.mus;}};
+const applyVol=()=>{(SQ.gl||[]).forEach(g=>{g.gain.value=g._b*VOL.mus*1.07;});Mus.setVol();};
+function stopAudio(){(SQ.srcs||[]).forEach(s=>{try{s.stop();}catch(e){}});SQ.srcs=[];SQ.gl=[];}
 function stageHTML(){
  const F=R.film,n=F.judges.length,bh=n>=5?66:n===4?76:84;
  const busts=F.judges.map(j=>`<div class="bj" data-seat="${j.seat}"><img src="${IM(j.persona.f)}" alt=""></div>`).join('');
@@ -1021,7 +1032,7 @@ function sqLoop(){
  requestAnimationFrame(sqLoop);
 }
 async function sqEnd(){
- SQ.on=false;stopAudio();
+ SQ.on=false;stopAudio();Mus.resume();
  const tok=SQ.tok,live=()=>R.token===tok&&R.screen==='show';
  const F=R.film,r=F.res;
  const perf=SQ.plan.reduce((a,c)=>a+(c.sc||0),0)/SQ.plan.length;
@@ -1036,6 +1047,7 @@ async function sqEnd(){
 }
 async function runShow(){
  const F=R.film;F.res=scoreFilm(F);
+ Mus.pause();
  const tok=++R.token;const live=()=>R.token===tok&&R.screen==='show';
  const h=HALLS[S.hall],rule=SQ_RULE[S.hall]||SQ_RULE[0],P=60/rule.bpm;
  const sp=rule.sp,base=Math.round(rule.dur/(sp*P)),N=base+clamp(Math.round((h.thr-(F.res.prod+6))/4),0,Math.floor(base*.25));
@@ -1056,9 +1068,9 @@ async function runShow(){
  new Image().src=IM('dp_hit');
  if(AC)await Promise.all(names.map(loadSnd));
  if(!live())return;
- const when=(AC?AC.currentTime:0)+.25;stopAudio();const srcs=[];
- if(AC)for(const [nm,vol] of [[rule.bed,.62],[rule.bgm,rule.bgmg]]){const b=SNDBUF[nm];if(!b)continue;try{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g.gain.value=vol;s.connect(g).connect(AC.destination);s.start(when);srcs.push(s);}catch(e){}}
- Object.assign(SQ,{on:true,tok,T0:performance.now()+250,per:P,sp,rule,plan,cuts,cutPer,endT,srcs,aid:0,hid:0,view:'f',lastBeat:-1,ci:-1});
+ const when=(AC?AC.currentTime:0)+.25;stopAudio();const srcs=[],gl=[];
+ if(AC)for(const [nm,vol] of [[rule.bed,.62],[rule.bgm,rule.bgmg]]){const b=SNDBUF[nm];if(!b)continue;try{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g._b=vol;g.gain.value=vol*VOL.mus*1.07;gl.push(g);s.connect(g).connect(AC.destination);s.start(when);srcs.push(s);}catch(e){}}
+ Object.assign(SQ,{on:true,tok,T0:performance.now()+250,per:P,sp,rule,plan,cuts,cutPer,endT,srcs,gl,aid:0,hid:0,view:'f',lastBeat:-1,ci:-1});
  R.sq=SQ;
  for(const [id,sd] of [['#tzL','L'],['#tzR','R']]){const e=$(id);if(e)e.addEventListener('pointerdown',ev=>{ev.preventDefault();sqTap(sd);});}
  const scr=$('#screen');if(scr){scr.classList.remove('off');scr.classList.add('on');}
@@ -1244,6 +1256,31 @@ if(dirInput)dirInput.addEventListener('change',e=>{handleFolder(Array.from(e.tar
 if(typeof globalThis.__USE_TEST!=='undefined')globalThis.__USE_T={S,R,SQ_RULE,TEXT,CUTS:()=>CUTS,newFilm,doShoot,scoreFilm,reviewLines,rollJudges,aLv,dLv,unlocked,typesOf,placesOf,actorsList,HALLS,WRITERS,slotsNow,candsNow,normType};
 render();
 if(NB&&NB.hasFolder()){R.folderMsg='그림 폴더를 읽는 중…';render();setTimeout(()=>NB.scan(),50);}
+/* 설정(소리) 버튼 */
+setTimeout(function setupSound(){try{
+ const st=document.createElement('style');
+ st.textContent='#gear{position:fixed;right:max(8px,env(safe-area-inset-right,0px));top:max(8px,env(safe-area-inset-top,0px));z-index:40;width:34px;height:34px;border-radius:50%;border:1.5px solid #d9b25f;background:#2a1019d9;color:#f3dca0;font-size:19px;line-height:1;display:grid;place-items:center;padding:0;cursor:pointer}'+
+ '#setp{position:fixed;inset:0;z-index:70;background:#000a;display:none;place-items:center}#setp.on{display:grid}'+
+ '#setp .bx{width:min(86vw,340px);background:#1d0c11;border:2px solid #d9b25f;border-radius:14px;padding:18px 18px 16px;color:#f6ead0;font-family:inherit}'+
+ '#setp h3{margin:0 0 14px;font-size:17px;text-align:center;color:#f3dca0}#setp label{display:block;margin:12px 0 4px;font-size:14px}'+
+ '#setp input[type=range]{width:100%;accent-color:#d9b25f}#setp .v{float:right;color:#d9b25f}'+
+ '#setp button{display:block;margin:18px auto 0;padding:9px 34px;border-radius:20px;border:0;background:#d9b25f;color:#2a1019;font-weight:700;font-size:15px}';
+ document.head.appendChild(st);
+ const g=document.createElement('button');g.id='gear';g.type='button';g.setAttribute('aria-label','설정');g.textContent='⚙';document.body.appendChild(g);
+ const p=document.createElement('div');p.id='setp';
+ p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><button type="button" id="rc">닫기</button></div>';
+ document.body.appendChild(p);
+ const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs');
+ const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';};
+ rm.oninput=()=>{VOL.mus=rm.value/100;vm.textContent=rm.value+'%';saveVol();applyVol();};
+ rs.oninput=()=>{VOL.sfx=rs.value/100;vs.textContent=rs.value+'%';saveVol();};
+ rs.onchange=()=>{try{acx();loadSnd('hit_punch').then(()=>playBuf('hit_punch',.9));}catch(e){}};
+ g.onclick=()=>{sync();p.classList.add('on');};
+ p.querySelector('#rc').onclick=()=>p.classList.remove('on');
+ p.onclick=e=>{if(e.target===p)p.classList.remove('on');};
+ const kick=()=>{if(!Mus.src&&!Mus.hold)Mus.play();else if(AC&&AC.state==='suspended'&&AC.resume)AC.resume();};
+ document.addEventListener('pointerdown',kick,true);Mus.play();
+}catch(e){}},0);
 })();
 
 /* 버전 표시: 앱이 인터넷판을 쓰는지 내장판을 쓰는지 한눈에 (verStamp) */
@@ -1254,4 +1291,5 @@ setTimeout(function verStamp(){try{
  else if(/github\.io$/.test(host)){d.textContent='인터넷판';fetch('version.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{d.textContent='인터넷판 '+t.trim().slice(0,7);}).catch(()=>{});}
  else return;
  document.body.appendChild(d);}catch(e){}},0);
+
 </script>
