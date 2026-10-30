@@ -1245,4 +1245,13 @@ if(typeof globalThis.__USE_TEST!=='undefined')globalThis.__USE_T={S,R,SQ_RULE,TE
 render();
 if(NB&&NB.hasFolder()){R.folderMsg='그림 폴더를 읽는 중…';render();setTimeout(()=>NB.scan(),50);}
 })();
+
+/* 버전 표시: 앱이 인터넷판을 쓰는지 내장판을 쓰는지 한눈에 (verStamp) */
+setTimeout(function verStamp(){try{
+ const host=location.host,d=document.createElement('div');
+ d.style.cssText='position:fixed;right:6px;bottom:2px;font:10px sans-serif;color:#ffffff66;z-index:1;pointer-events:none';
+ if(/androidplatform/.test(host))d.textContent='내장판';
+ else if(/github\.io$/.test(host)){d.textContent='인터넷판';fetch('version.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{d.textContent='인터넷판 '+t.trim().slice(0,7);}).catch(()=>{});}
+ else return;
+ document.body.appendChild(d);}catch(e){}},0);
 </script>
