@@ -124,6 +124,28 @@ border-style:solid;border-width:12px;border-image:url(a/panel_06.webp) 36 fill/1
 .slot .mv button:disabled{color:#6f665c;cursor:not-allowed}
 .meter{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;justify-content:center}
 .meter b{font-variant-numeric:tabular-nums}
+.guide{background:rgba(217,178,92,.28);border:2px solid var(--gold-d);border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.5;color:var(--ink);font-weight:600}
+.guide .st{display:inline-block;background:var(--wine);color:var(--lt);border-radius:10px;padding:0 8px;margin-right:6px;font-size:12px;font-weight:700}
+@keyframes hlb{0%,100%{box-shadow:0 0 0 0 rgba(217,178,92,0)}50%{box-shadow:0 0 0 3px rgba(217,178,92,.95),0 0 14px 4px rgba(217,178,92,.7)}}
+.hl{animation:hlb 1.1s ease-in-out infinite;border-radius:8px}
+.chk2{border:1.5px solid var(--gold-d);border-radius:10px;background:rgba(255,255,255,.3);padding:8px 10px;display:flex;flex-direction:column;gap:9px}
+.jt{font-weight:700;font-size:13.5px;line-height:1.4;color:var(--ink)}
+.jrow.ok .jt{color:#2d6a3a}.jrow.dead .jt{color:var(--mut);font-weight:600}
+.jt .mk{font-size:14px}
+.goal{text-align:center;font-size:13px;font-weight:700;color:var(--wine)}
+.sw{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sw .rc{text-align:center;font:600 11px var(--f-b);color:var(--ink2);line-height:1.2}.sw .rc b{font-family:var(--f-d);color:var(--wine)}
+.slot.empty{cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(59,34,24,.16);padding:0;font:inherit;color:var(--ink)}
+.slot.empty .plus{font:800 36px var(--f-d);color:var(--gold-d);line-height:1}
+.slot.empty .how{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 10.5px var(--f-b);color:var(--ink2)}
+.slot.empty.nx{outline:3px solid var(--gold);outline-offset:-3px}
+.slot .x{position:absolute;right:2px;top:2px;z-index:4;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--gold);background:rgba(110,18,38,.94);color:#fff;font:800 14px var(--f-b);padding:0;line-height:1;cursor:pointer;touch-action:manipulation}
+.erow{display:flex;gap:8px}.erow>*{flex:1}
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet .sbg{position:absolute;inset:0;background:rgba(0,0,0,.62)}
+.sheet .bx{color:var(--ink);position:relative;z-index:1;width:min(100%,520px);max-height:84vh;overflow:auto;background:var(--cream);border-top:3px solid var(--gold-d);border-radius:14px 14px 0 0;padding:12px 12px max(14px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px}
+.sheet h3{margin:0;text-align:center;font-family:var(--f-d);color:var(--wine);font-size:16px}
+.minij{font-size:12.5px;line-height:1.5}.minij .ok{color:#2d6a3a;font-weight:700}
 .slate{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--gold-d);background:#0c070a}
 .slate .clap{height:26px;background:repeating-linear-gradient(120deg,#eee5d8 0 18px,#0c070a 18px 36px);transform-origin:left bottom;animation:clap 1.3s ease-in both}
 .slate .sb{padding:12px 14px;display:flex;flex-direction:column;gap:3px;color:var(--lt)}
@@ -644,15 +666,43 @@ function rollJudges(){
 }
 function hint(j){
  const p=j.pref;
- if(p.kind==='actor')return `'${p.value}'의 필모그래피를 사랑합니다`;
- if(p.kind==='place')return `'${p.value}'의 조명 미학을 선호합니다`;
- return `'${tlabel(p.value)}' 계열에 후한 점수를 줍니다`;
+ if(p.kind==='actor')return `'${p.value}' 배우가 나오는 컷을 좋아합니다`;
+ if(p.kind==='place')return `'${p.value}'에서 찍은 영화를 좋아합니다`;
+ return `'${tlabel(p.value)}' 유형 컷을 좋아합니다`;
 }
+/* 초보 안내: 자동 = 1판 단계별 / 2판 체크만 / 3판부터 끔. 설정(⚙)에서 항상/끄기 */
+const GD={m:(()=>{try{return localStorage.getItem('use_guide')||'auto';}catch(e){return 'auto';}})()};
+const guideLv=()=>GD.m==='off'?0:GD.m==='on'?2:(S.filmNo<=1?2:S.filmNo===2?1:0);
+const ROLE_TIP={'도입':'약한 컷','전개':'점점 세게','절정':'가장 센 컷','여운':'숨 돌리는 컷'};
+const LENS_TIP={art:'컷을 약한 것부터 센 것 순서로 놓고, 노란 테두리(이미 쓴 컷)는 피하세요.',bold:'절정 칸에 ◆가 많은 센 컷을 넣고, 유형을 3가지 이상 섞으세요.',love:'주력 유형 컷을 요구 장수 이상 넣으세요.'};
+/* 심사위원 한 명이 원하는 것을 '할 일' 한 줄로. stage: 'plan' | 'edit' */
+function jNeed(F,j,stage){
+ const p=j.pref,edit=stage==='edit';
+ const N=edit?F.slots:slotsNow(),need=Math.max(1,Math.ceil(N/3));
+ if(p.kind==='place'){
+  const ok=F.place===p.value;
+  if(!edit)return {ok,txt:`장소를 '${p.value}'로 고르세요`,cur:ok?'고름':(F.place?`지금 '${F.place}'`:'아직')};
+  return {ok,dead:!ok,txt:ok?`장소 '${p.value}' — 이미 맞췄습니다`:`장소 '${p.value}' — 이번 영화는 장소가 달라 못 맞춥니다`,cur:''};
+ }
+ const isA=p.kind==='actor',name=isA?p.value:tlabel(p.value),m=c=>isA?c.actor===p.value:c.type===p.value;
+ if(!edit){
+  const ok=isA?(F.actor===p.value||(F.cast||[]).includes(p.value)):F.mainType===p.value;
+  return {ok,txt:isA?`'${name}' 배우를 주연이나 조연으로 쓰세요`:`주력 유형을 '${name}'(으)로 고르세요`,cur:ok?'맞음':'아직'};
+ }
+ const have=F.edit.filter(m).length,avail=F.cands.filter(m).length,ok=have>=need,dead=!ok&&avail<need;
+ return {ok,dead,need,have,avail,txt:dead?`'${name}' 컷은 후보가 ${avail}장뿐이라 못 맞춥니다`:`'${name}' 컷 ${need}장 이상 넣기`,cur:`지금 ${have}장`};
+}
+function goalLine(F,stage){
+ const js=F.judges,k=js.filter(j=>jNeed(F,j,stage).ok).length,goal=Math.floor(js.length/2)+1,done=k>=goal;
+ return `<div class="goal">${done?'✅':'🎯'} 심사위원 ${js.length}명 중 ${k}명 맞춤 · ${goal}명 이상 맞추면 합격권${done?' — 좋습니다!':''}</div>`;
+}
+/* 이 컷이 아직 안 맞춘 심사위원이 원하는 컷인가 (★ 표시용) */
+const wantedCut=(F,c)=>F.judges.some(j=>j.pref.kind!=='place'&&prefMatch(j,c)&&!jNeed(F,j,'edit').ok);
 const prefMatch=(j,c)=>j.pref.kind==='actor'?c.actor===j.pref.value:j.pref.kind==='place'?c.place===j.pref.value:c.type===j.pref.value;
 
 function newFilm(){
  R.film={actor:null,cast:[],place:null,mainType:null,writer:null,title:'',slots:0,req:0,cands:[],edit:[],judges:rollJudges(),res:null};
- R.shootReady=false;R.strip=false;
+ R.shootReady=false;R.strip=false;R.pickOpen=false;
 }
 
 /* ===== 그림 도우미 ===== */
@@ -775,8 +825,34 @@ function header(step){
  <div class="hp"><span>감독 Lv.${lv}</span><div class="gbar" title="감독 경험치"><i style="width:${pct}%"></i></div></div></div></div>
  ${step==null?'':`<div class="bkrow"><button class="bk" data-act="goback" ${(backState()||{}).can?'':'disabled'}>‹ 뒤로</button></div><div class="tabs">${STEPS.map((s,i)=>`<div class="tab ${i===step?'on':''}">${s}</div>`).join('')}</div>`}`;
 }
-function judgeList(F){
- return F.judges.map(j=>`<div class="jrow">${jpHTML(j.persona)}<div class="grow"><b style="font-family:var(--f-d)">${esc(j.persona.name)}</b> ${gradeBadge(j.grade)}<div class="small" style="color:var(--ink2)">${esc(hint(j))}</div><div class="small mut">눈: ${LENS[j.lens||'art'].n} (${LENS[j.lens||'art'].d})</div></div></div>`).join('');
+function judgeList(F,stage){
+ stage=stage||'plan';
+ return F.judges.map(j=>{const n=jNeed(F,j,stage),L=LENS[j.lens||'art'];
+  const mk=n.ok?'✅':n.dead?'➖':'⬜';
+  return `<div class="jrow ${n.ok?'ok':''} ${n.dead?'dead':''}">${jpHTML(j.persona)}<div class="grow"><div><b style="font-family:var(--f-d)">${esc(j.persona.name)}</b> <span class="small mut">영향력</span> ${gradeBadge(j.grade)}</div><div class="jt"><span class="mk">${mk}</span> ${esc(n.txt)}${n.cur?` <span class="mut" style="font-weight:600">(${esc(n.cur)})</span>`:''}</div><div class="small mut"><b>${L.n}</b>도 봅니다 — ${LENS_TIP[j.lens||'art']}</div></div></div>`;}).join('');
+}
+/* '추천대로 채우기': 주력·심사위원 취향을 맞추고 약한 컷→센 컷 순으로 배치 */
+function autoFill(F){
+ const N=F.slots,need=Math.max(1,Math.ceil(N/3)),chosen=[],pool=F.cands.slice();
+ while(chosen.length<N&&chosen.length<pool.length){
+  const mc=chosen.filter(c=>c.type===F.mainType).length,tys=new Set(chosen.map(c=>c.type));
+  let bestC=null,bv=-1e9;
+  for(const c of pool){
+   if(chosen.includes(c))continue;
+   let v=0;
+   if(c.type===F.mainType&&mc<F.req)v+=3;
+   for(const j of F.judges){if(j.pref.kind==='place')continue;if(prefMatch(j,c)&&chosen.filter(x=>prefMatch(j,x)).length<need)v+=2.5;}
+   if(!tys.has(c.type)&&tys.size<3)v+=1.2;
+   v+=.6*tierOf(c)-Math.min(3,S.usage[c.id]||0)+Math.random()*.2;
+   if(v>bv){bv=v;bestC=c;}
+  }
+  chosen.push(bestC);
+ }
+ const asc=chosen.slice().sort((a,b)=>tierOf(a)-tierOf(b)||String(a.type).localeCompare(String(b.type)));
+ let out;
+ if(asc.length>=3){const top=asc.pop(),low=asc.shift();out=asc.concat([top,low]);}
+ else out=asc;
+ F.edit=out;
 }
 
 /* ===== 화면: 타이틀 ===== */
@@ -802,6 +878,15 @@ const castCost=()=>((R.film&&R.film.cast)||[]).reduce((t,a)=>t+castFee(a),0);
 /* ===== 화면: 기획 ===== */
 function viewPlan(){
  const F=R.film,nh=HALLS[S.hall+1];
+ let hl='',gd='';
+ if(guideLv()>=2){
+  let st,msg;
+  if(!F.actor){st='할 일 1/4';msg='주연 배우를 한 명 고르세요. 아래 배우 카드를 누르면 됩니다.';hl='actor';}
+  else if(!F.place){st='할 일 2/4';msg='장소를 고르세요. ★가 붙은 곳은 심사위원이 좋아하는 장소입니다.';hl='place';}
+  else if(!F.mainType){st='할 일 3/4';msg='주력 유형을 고르세요. ★가 붙은 건 심사위원 취향입니다. 정답은 없으니 마음에 드는 걸로 하세요.';hl='type';}
+  else{st='할 일 4/4';msg='조연은 없어도 됩니다. 준비됐으면 ‘시나리오로’를 누르세요.';hl='next';}
+  gd=`<div class="guide"><b class="st">${st}</b>${msg}</div>`;
+ }
  const as=actorsList().map(a=>{
   const lv=aLv(a),e=A(a).exp,prev=ACT_TH[lv-1],nxt=ACT_TH[lv],pct=nxt?Math.round((e-prev)/(nxt-prev)*100):100;
   const spec=Object.entries(A(a).uses).filter(([t,n])=>n>=3).map(([t])=>tlabel(t));
@@ -810,15 +895,17 @@ function viewPlan(){
  });
  const PGN=4,pc=Math.max(1,Math.ceil(as.length/PGN));
  R.cardPage=clamp(R.cardPage||0,0,pc-1);
- const cardsHTML=`<div class="cards" id="cardpages">${as.slice(R.cardPage*PGN,R.cardPage*PGN+PGN).join('')}</div>`+(pc>1?`<div class="pgnav" id="pgdots"><button class="pn cream" data-act="cpage" data-arg="-1" ${R.cardPage===0?'disabled':''} aria-label="이전 배우">‹</button><div class="dots">${Array.from({length:pc},(_,i)=>`<i class="${i===R.cardPage?'on':''}"></i>`).join('')}</div><button class="pn cream" data-act="cpage" data-arg="1" ${R.cardPage===pc-1?'disabled':''} aria-label="다음 배우">›</button></div>`:'');
+ const cardsHTML=`<div class="cards${hl==='actor'?' hl':''}" id="cardpages">${as.slice(R.cardPage*PGN,R.cardPage*PGN+PGN).join('')}</div>`+(pc>1?`<div class="pgnav" id="pgdots"><button class="pn cream" data-act="cpage" data-arg="-1" ${R.cardPage===0?'disabled':''} aria-label="이전 배우">‹</button><div class="dots">${Array.from({length:pc},(_,i)=>`<i class="${i===R.cardPage?'on':''}"></i>`).join('')}</div><button class="pn cream" data-act="cpage" data-arg="1" ${R.cardPage===pc-1?'disabled':''} aria-label="다음 배우">›</button></div>`:'');
  let placeHTML='',typeHTML='';
  if(F.actor){
-  placeHTML=`<div class="sec"><div class="sech"><h3>장소</h3></div><div class="opts">${placesOf(F.actor).map(p=>`<button class="pn ${F.place===p?'sel':'cream'}" data-act="place" data-arg="${esc(p)}"><b>${esc(p)}</b><small>컷 ${cutsOf(F.actor,p).length}장</small></button>`).join('')}</div></div>`;
+  const wantP=new Set(F.judges.filter(j=>j.pref.kind==='place').map(j=>j.pref.value));
+  placeHTML=`<div class="sec"><div class="sech"><h3>장소</h3></div><div class="opts${hl==='place'?' hl':''}">${placesOf(F.actor).map(p=>`<button class="pn ${F.place===p?'sel':'cream'}" data-act="place" data-arg="${esc(p)}"><b>${wantP.has(p)?'★ ':''}${esc(p)}</b><small>컷 ${cutsOf(F.actor,p).length}장${wantP.has(p)?' · 심사위원 취향':''}</small></button>`).join('')}</div></div>`;
  }
  if(F.actor&&F.place){
-  typeHTML=`<div class="sec"><div class="sech"><h3>주력 유형</h3></div><div class="opts">${typesOf(F.actor,F.place).map(t=>{
+  const wantT=new Set(F.judges.filter(j=>j.pref.kind==='type').map(j=>j.pref.value));
+  typeHTML=`<div class="sec"><div class="sech"><h3>주력 유형</h3><span class="small mut">이 영화에서 가장 많이 보여줄 장르</span></div><div class="opts${hl==='type'?' hl':''}">${typesOf(F.actor,F.place).map(t=>{
    const ok=unlocked(F.actor,t);const info=typeInfo(t);
-   return `<button class="pn ${F.mainType===t?'sel':'cream'}" data-act="mtype" data-arg="${esc(t)}" ${ok?'':'disabled'}><b>${esc(tlabel(t))}</b><small>${esc(rawLabel(t))}${ok?'':' · 배우 Lv '+info.tier+' 필요'}</small></button>`;}).join('')}</div></div>`;
+   return `<button class="pn ${F.mainType===t?'sel':'cream'}" data-act="mtype" data-arg="${esc(t)}" ${ok?'':'disabled'}><b>${wantT.has(t)?'★ ':''}${esc(tlabel(t))}</b><small>${esc(rawLabel(t))}${wantT.has(t)?' · 심사위원 취향':''}${ok?'':' · 배우 Lv '+info.tier+' 필요'}</small></button>`;}).join('')}</div></div>`;
  }
  let castHTML='';
  if(F.actor&&F.place&&F.mainType){
@@ -828,11 +915,11 @@ function viewPlan(){
  const ready=F.actor&&F.place&&F.mainType;
  const inv=nh?`<div class="sec"><div class="sech"><h3>투자</h3></div><div class="row"><div class="grow"><b style="font-family:var(--f-d)">시사회장 승급 · ${nh.name}</b><div class="small" style="color:var(--ink2)">심사위원 ${nh.seats.length}명 · 기준선 ${nh.thr}점 · 수입 ×${nh.mult}</div></div><button class="pl ${S.funds>=nh.cost?'gold':'gray'}" data-act="upgrade" ${S.funds>=nh.cost?'':'disabled'}>₡ ${fmt(nh.cost)}</button></div></div>`:'';
  return `${header(0)}
- <div class="main"><h2 style="text-align:center">제${S.filmNo}작 기획</h2><div class="sub">이번 시사회 심사위원의 취향입니다.</div>
- <div class="sec">${judgeList(F)}</div>
+ <div class="main"><h2 style="text-align:center">제${S.filmNo}작 기획</h2>${gd}<div class="sub">아래 심사위원이 좋아하는 걸 고를수록 점수가 올라갑니다.<br>순서: 주연 → 장소 → 주력 유형</div>
+ <div class="sec"><div class="sech"><h3>심사위원이 원하는 것</h3></div><div class="chk2">${judgeList(F,'plan')}${goalLine(F,'plan')}</div></div>
  <div class="sec"><div class="sech"><h3>주연</h3></div>${cardsHTML}</div>
  ${placeHTML}${typeHTML}${castHTML}
- <button class="pl gold wide" data-act="toScript" ${ready?'':'disabled'}>시나리오로 ›</button>
+ <button class="pl gold wide${hl==='next'?' hl':''}" data-act="toScript" ${ready?'':'disabled'}>시나리오로 ›</button>
  ${inv}</div>`;
 }
 
@@ -845,8 +932,8 @@ function viewScript(){
  const card=F.writer?`<div class="sec"><div class="sech"><h3>시나리오 카드</h3></div><input class="in" id="titleIn" value="${esc(F.title)}" maxlength="30" aria-label="작품 제목">
   <div class="small" style="text-align:center;color:var(--ink2)">주연 ${esc(F.actor)}${F.cast.length?' · 조연 '+esc(F.cast.join(', '))+' (출연료 ₡ '+fmt(castCost())+')':''} · ${esc(F.place)} · 주력 ${esc(tlabel(F.mainType))}</div>
   <div style="text-align:center">요구 조건: 편집 <b>${slots}컷</b> 중 주력 유형 <b style="color:var(--wine)">${req}컷 이상</b></div></div>`:'';
- return `${header(1)}<div class="main"><h2 style="text-align:center">시나리오 작가 선택</h2><div class="sub">어떤 작가와 함께 이야기를 만들겠습니까?</div><div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">${ws}</div>${card}
- <div class="pend"><button class="pl cream" data-act="back" data-arg="plan">‹ 기획으로</button><button class="pl gold grow" data-act="toShoot" ${F.writer?'':'disabled'}>촬영 시작</button></div></div>`;
+ return `${header(1)}<div class="main"><h2 style="text-align:center">시나리오 작가 선택</h2>${guideLv()>=2?`<div class="guide"><b class="st">할 일</b>작가를 한 명 고르세요. 비싼 작가일수록 점수 보너스가 큽니다. 고르면 ‘촬영 시작’이 켜집니다.</div>`:''}<div class="sub">어떤 작가와 함께 이야기를 만들겠습니까?</div><div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">${ws}</div>${card}
+ <div class="pend"><button class="pl cream" data-act="back" data-arg="plan">‹ 기획으로</button><button class="pl gold grow${guideLv()>=2&&F.writer?' hl':''}" data-act="toShoot" ${F.writer?'':'disabled'}>촬영 시작</button></div></div>`;
 }
 
 /* ===== 화면: 촬영 ===== */
@@ -879,31 +966,55 @@ function viewShoot(){
  const F=R.film;
  if(!R.shootReady)return `${header(2)}<div class="slate"><div class="clap"></div><div class="sb"><b style="color:var(--gold)">제${S.filmNo}작</b><div style="font-family:var(--f-d);font-size:20px">${esc(F.title)}</div><div class="small" style="opacity:.8">${esc(F.actor)} · ${esc(F.place)} · ${esc(tlabel(F.mainType))}</div><div class="small" style="opacity:.8">촬영 중…</div></div></div>`;
  const cs=F.cands.map((c,i)=>tileHTML(c,i,'noop','reveal',false).replace('class="cut','style="cursor:default" class="cut')).join('');
- return `${header(2)}<div class="main"><h2 style="text-align:center">촬영 완료</h2><div class="sub">후보 컷 ${F.cands.length}장이 나왔습니다. 배우 Lv ${aLv(F.actor)}의 폭입니다.</div><div class="cuts">${cs}</div>
- <button class="pl gold wide" data-act="toEdit">편집실로 ›</button></div>`;
+ return `${header(2)}<div class="main"><h2 style="text-align:center">촬영 완료</h2>${guideLv()>=2?`<div class="guide"><b class="st">할 일</b>찍힌 후보 컷들입니다. 아래 ‘편집실로’를 누르세요.</div>`:''}<div class="sub">후보 컷 ${F.cands.length}장이 나왔습니다. 배우 Lv ${aLv(F.actor)}의 폭입니다.</div><div class="cuts">${cs}</div>
+ <button class="pl gold wide${guideLv()>=2?' hl':''}" data-act="toEdit">편집실로 ›</button></div>`;
 }
 
 /* ===== 화면: 편집 ===== */
 function viewEdit(){
- const F=R.film;
+ const F=R.film,gl=guideLv();
  const mainCount=F.edit.filter(c=>c.type===F.mainType).length;
+ const roles=slotRoles(F.slots),full=F.edit.length>=F.slots,nextI=F.edit.length;
  const slotHTML=Array.from({length:F.slots},(_,i)=>{
-  const c=F.edit[i];
-  const role=slotRoles(F.slots)[i];
-  if(!c)return `<div class="slot"><span class="no">${i+1}</span><span class="role">${role}</span></div>`;
-  return `<div class="slot"><span class="no">${i+1}</span><span class="role">${role}</span>${F.cast.length?`<span class="an">${esc(c.actor)}</span>`:''}${cutHTML(c)}<button class="rm" data-act="rm" data-arg="${i}" aria-label="${i+1}번 컷 빼기"></button><div class="mv"><button data-act="mv" data-arg="${i}:-1" ${i===0?'disabled':''} aria-label="앞으로">◀</button><button data-act="mv" data-arg="${i}:1" ${i===F.edit.length-1?'disabled':''} aria-label="뒤로">▶</button></div></div>`;
+  const c=F.edit[i],r=roles[i];
+  const cap=`<div class="rc"><b>${i+1} ${r}</b><br>${ROLE_TIP[r]}</div>`;
+  if(!c)return `<div class="sw"><button class="slot empty ${i===nextI?'nx':''}" data-act="pick" aria-label="${i+1}번 칸에 컷 넣기"><span class="plus">＋</span><span class="how">눌러서 고르기</span></button>${cap}</div>`;
+  return `<div class="sw"><div class="slot">${F.cast.length?`<span class="an">${esc(c.actor)}</span>`:''}${cutHTML(c)}<button class="x" data-act="rm" data-arg="${i}" aria-label="${i+1}번 컷 빼기">✕</button><div class="mv"><button data-act="mv" data-arg="${i}:-1" ${i===0?'disabled':''} aria-label="앞으로">◀</button><button data-act="mv" data-arg="${i}:1" ${i===F.edit.length-1?'disabled':''} aria-label="뒤로">▶</button></div></div>${cap}</div>`;
  }).join('');
- const full=F.edit.length>=F.slots;
- const cs=F.cands.map((c,i)=>tileHTML(c,i,'add',F.edit.includes(c)?'picked':'',F.edit.includes(c)||full)).join('');
+ const star=c=>wantedCut(F,c);
+ const tile=(c,i,act,extra,dis)=>{let t=tileHTML(c,i,act,extra,dis);if(star(c))t=t.replace('<div class="cap">','<div class="cap">★ ');return t;};
+ const cs=F.cands.map((c,i)=>tile(c,i,'add',F.edit.includes(c)?'picked':'',F.edit.includes(c)||full)).join('');
  const types=new Set(F.edit.map(c=>c.type)).size;
+ let gd='',hlBtn='',hlCands='';
+ if(gl>=2){
+  if(nextI===0){gd=`<div class="guide"><b class="st">할 일 1/3</b>빈 칸(＋)이나 아래 ‘후보 컷’을 눌러 ${F.slots}칸을 채우세요. 위 체크리스트가 ✅가 되게 고르면 됩니다. 어려우면 ‘추천대로 채우기’를 눌러 보세요.</div>`;}
+  else if(!full){gd=`<div class="guide"><b class="st">할 일 2/3</b>${F.slots-nextI}칸 남았습니다. 첫 칸은 약한 컷, 끝에서 둘째(절정)는 ◆가 많은 센 컷이 좋습니다. 잘못 넣었으면 컷 오른쪽 위 ✕로 뺍니다.</div>`;}
+  else{gd=`<div class="guide"><b class="st">할 일 3/3</b>다 채웠습니다. ◀ ▶로 순서를 바꿀 수 있고, 괜찮으면 맨 아래 ‘시사회 시작’을 누르세요.</div>`;hlBtn=' hl';}
+ }else if(gl===1){
+  gd=`<div class="guide">체크리스트가 ✅가 되도록 채워 보세요. 막히면 ‘추천대로 채우기’. 잘못 넣은 컷은 ✕로 뺍니다.</div>`;
+ }
+ let sheet='';
+ if(R.pickOpen&&!full){
+  const r=roles[nextI];
+  const items=F.cands.map((c,i)=>F.edit.includes(c)?'':tile(c,i,'put','',false)).join('');
+  const mini=F.judges.map(j=>{const n=jNeed(F,j,'edit');return `<div class="${n.ok?'ok':''}">${n.ok?'✅':n.dead?'➖':'⬜'} ${esc(j.persona.name)} — ${esc(n.txt)}${n.cur?` (${esc(n.cur)})`:''}</div>`;}).join('');
+  sheet=`<div class="sheet"><div class="sbg" data-act="pickClose"></div><div class="bx">
+   <h3>${nextI+1}번 칸 · ${r} (${ROLE_TIP[r]})</h3>
+   <div class="minij">${mini}</div>
+   <div class="small mut" style="text-align:center">★ = 아직 못 맞춘 심사위원이 원하는 컷 · ◆ = 컷의 세기 · 노란 테두리 = 이미 쓴 컷</div>
+   <div class="cuts">${items}</div>
+   <button class="pl cream wide" data-act="pickClose">취소</button></div></div>`;
+ }
  return `${header(3)}
- <div class="main"><h2 style="text-align:center">${esc(F.title)}</h2>
-  <div class="meter"><span>주력 <b>${mainCount}/${F.req}</b></span><span>컷 <b>${F.edit.length}/${F.slots}</b></span><span>섞인 유형 <b>${types}</b></span></div>
+ <div class="main"><h2 style="text-align:center">${esc(F.title)}</h2>${gd}
+  <div class="sec"><div class="sech"><h3>심사위원이 원하는 것</h3></div><div class="chk2">${judgeList(F,'edit')}${goalLine(F,'edit')}</div></div>
+  <div class="sec"><div class="sech"><h3>편집판 (${F.slots}칸)</h3></div>
+  <div class="meter"><span>주력 유형 컷 <b>${mainCount}/${F.req}</b></span><span>채운 칸 <b>${F.edit.length}/${F.slots}</b></span><span>섞인 유형 <b>${types}</b></span></div>
   <div class="slots">${slotHTML}</div>
-  <div class="small mut" style="text-align:center">후보를 눌러 넣고 컷을 누르면 뺍니다. 순서가 곧 연출입니다. 도입은 약하게, 절정에는 가장 센 유형(◆가 많은 것), 여운은 한숨 돌리는 컷이 좋습니다. 노란 테두리는 이미 쓴 컷입니다.</div>
-  <div class="sec"><div class="sech"><h3>심사위원 취향</h3></div>${judgeList(F)}</div>
-  <div class="sec"><div class="sech"><h3>후보 컷</h3></div><div class="cuts">${cs}</div></div>
-  <button class="pl gold wide" data-act="toShow" ${full?'':'disabled'}>시사회 시작</button></div>`;
+  <div class="erow"><button class="pl cream" data-act="auto">추천대로 채우기</button><button class="pl cream" data-act="clear" ${F.edit.length?'':'disabled'}>전부 비우기</button></div>
+  <div class="small mut" style="text-align:center">컷은 위에서 번호 순서대로 나옵니다. ◆는 컷의 세기, 노란 테두리는 이미 다른 영화에 쓴 컷입니다(점수가 깎입니다). 주력 유형 컷은 <b>${F.req}장 이상</b> 넣어야 궁합 점수를 다 받습니다.</div></div>
+  <div class="sec"><div class="sech"><h3>후보 컷</h3><span class="small mut">눌러서 다음 빈 칸에 넣기</span></div><div class="cuts">${cs}</div></div>
+  <button class="pl gold wide${hlBtn}" data-act="toShow" ${full?'':'disabled'}>시사회 시작</button></div>${sheet}`;
 }
 
 /* ===== 화면: 시사회 ===== */
@@ -1244,11 +1355,15 @@ document.addEventListener('click',e=>{
  else if(act==='writer'){F.writer=arg;F.title=genTitle(F);render();}
  else if(act==='back'){go(arg);}
  else if(act==='toShoot'){const w=WRITERS.find(x=>x.id===F.writer);if(S.funds<w.cost+castCost())return;S.funds-=w.cost+castCost();save();R.screen='shoot';doShoot();render();}
- else if(act==='toEdit'){go('edit');}
- else if(act==='add'){const c=F.cands[+arg];if(c&&!F.edit.includes(c)&&F.edit.length<F.slots){F.edit.push(c);snd('tick');render();}}
+ else if(act==='toEdit'){R.pickOpen=false;go('edit');}
+ else if(act==='add'||act==='put'){const c=F.cands[+arg];if(c&&!F.edit.includes(c)&&F.edit.length<F.slots){F.edit.push(c);snd('tick');}R.pickOpen=false;render();}
+ else if(act==='pick'){if(F.edit.length<F.slots){R.pickOpen=true;render();}}
+ else if(act==='pickClose'){R.pickOpen=false;render();}
+ else if(act==='clear'){F.edit=[];R.pickOpen=false;render();}
+ else if(act==='auto'){autoFill(F);R.pickOpen=false;snd('ding');render();}
  else if(act==='rm'){F.edit.splice(+arg,1);render();}
  else if(act==='mv'){const [i,d]=arg.split(':').map(Number),j=i+d;if(j>=0&&j<F.edit.length){[F.edit[i],F.edit[j]]=[F.edit[j],F.edit[i]];render();}}
- else if(act==='toShow'){if(F.edit.length>=F.slots)go('show');}
+ else if(act==='toShow'){if(F.edit.length>=F.slots){R.pickOpen=false;go('show');}}
  else if(act==='skip'){R.skip=true;}
  else if(act==='next'){nextFilm();}
 });
@@ -1271,10 +1386,13 @@ setTimeout(function setupSound(){try{
  document.head.appendChild(st);
  const g=document.createElement('button');g.id='gear';g.type='button';g.setAttribute('aria-label','설정');g.textContent='⚙';document.body.appendChild(g);
  const p=document.createElement('div');p.id='setp';
- p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><label>소리 맞추기 <span class="v" id="vl"></span></label><input type="range" id="rl" min="0" max="300" step="10"><div style="font-size:12px;color:#c9b88a;margin-top:4px">소리·박자가 화면보다 늦게 들리면 올리세요.</div><button type="button" id="rc">닫기</button></div>';
+ p.innerHTML='<div class="bx"><h3>설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><label>소리 맞추기 <span class="v" id="vl"></span></label><input type="range" id="rl" min="0" max="300" step="10"><div style="font-size:12px;color:#c9b88a;margin-top:4px">소리·박자가 화면보다 늦게 들리면 올리세요.</div><label>초보 안내 <span class="v" id="vg"></span></label><button type="button" id="rg" style="margin:4px 0 0;width:100%;padding:8px 0;background:#3a1d26;color:#f3dca0;border:1px solid #d9b25f">바꾸기</button><div style="font-size:12px;color:#c9b88a;margin-top:4px">자동 = 1~2판만 단계별 안내. 항상 / 끄기로 바꿀 수 있습니다.</div><button type="button" id="rc">닫기</button></div>';
  document.body.appendChild(p);
  const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs'),rl=p.querySelector('#rl'),vl=p.querySelector('#vl');
- const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';rl.value=VOL.lag;vl.textContent=VOL.lag+'ms';};
+ const rg=p.querySelector('#rg'),vg=p.querySelector('#vg'),GN={auto:'자동 (1~2판만)',on:'항상 켜기',off:'끄기'};
+ const gsync=()=>{vg.textContent=GN[GD.m]||GN.auto;};
+ rg.onclick=()=>{GD.m=GD.m==='auto'?'on':GD.m==='on'?'off':'auto';try{localStorage.setItem('use_guide',GD.m);}catch(e){}gsync();render();};
+ const sync=()=>{gsync();rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';rl.value=VOL.lag;vl.textContent=VOL.lag+'ms';};
  rl.oninput=()=>{VOL.auto=false;VOL.lag=+rl.value;vl.textContent=VOL.lag+'ms';saveVol();};
  rm.oninput=()=>{VOL.mus=rm.value/100;vm.textContent=rm.value+'%';saveVol();applyVol();};
  rs.oninput=()=>{VOL.sfx=rs.value/100;vs.textContent=rs.value+'%';saveVol();};
