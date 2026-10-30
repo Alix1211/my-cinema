@@ -325,13 +325,12 @@ border-style:solid;border-width:11px;border-image:url(a/plate_08.webp) 26 fill/1
 .pbub::after{left:-1.7cqw;bottom:auto;top:38%;border:.9cqw solid transparent;border-right:1.8cqw solid #d9b25f;border-left:0}
 .bgx{position:absolute;inset:0;width:100%;height:100%;z-index:0;filter:brightness(.8);pointer-events:none}
 .pil{display:none}
-.hrt{position:absolute;left:50%;top:11.2%;width:4.2cqw;height:3.8cqw;margin-left:-2.1cqw;z-index:8;pointer-events:none;--hc:#ff7fb8;opacity:0;transition:opacity .2s}
-.hrt::before{content:"";position:absolute;left:-17cqw;right:-17cqw;top:-.5cqw;bottom:-.5cqw;border-radius:2.4cqw;background:#0000004d}
+.hrt{position:absolute;left:50.25%;top:63.4%;width:4cqw;height:3.6cqw;margin-left:-2cqw;z-index:8;pointer-events:none;--hc:#ff7fb8;opacity:0;transition:opacity .2s}
 .hrt.on{opacity:1}.hrt.L{--hc:#ff7fb8}.hrt.R{--hc:#b58cff}
 .hrt svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .hrt path{stroke:var(--hc);stroke-linejoin:round;fill:none}
-.hrt .ht{filter:blur(.1cqw) drop-shadow(0 0 .5cqw var(--hc))}.hrt .ht path{stroke-width:6;stroke-opacity:.9}
-.hrt .hm{opacity:0;filter:drop-shadow(0 0 .45cqw var(--hc))}.hrt .hm path{stroke-width:5;fill:var(--hc);fill-opacity:.35}
+.hrt .ht{filter:blur(.1cqw) drop-shadow(0 0 .3cqw var(--hc))}.hrt .ht path{stroke-width:6;stroke-opacity:.8}
+.hrt .hm{opacity:0;filter:drop-shadow(0 0 .3cqw var(--hc))}.hrt .hm path{stroke-width:5;fill:var(--hc);fill-opacity:.3}
 .hrt .hb{opacity:0;transform-origin:50% 52%}.hrt .hb path{fill:var(--hc);fill-opacity:.55;stroke:#fff;stroke-width:4}
 .hrt.bp .hb{animation:hburst .5s ease-out}.hrt.bg .hb{animation:hburst .3s ease-out;filter:saturate(.5)}
 .hrt.bm .ht{animation:hmiss .32s linear}
@@ -910,9 +909,9 @@ function viewEdit(){
 /* ===== 화면: 시사회 ===== */
 /* ===== 시사회: 가로 극장 무대 (비평을 듣고 스쿼트·패들을 박자에 맞춰 터치) ===== */
 const SQ_RULE=[
- {bpm:90,sp:2,dur:30,off:.19,perfect:.11,good:.30,swap:.30,bed:'squat90_bed',bgm:'squat90_bgm',bgmg:1.1},
- {bpm:120,sp:3,dur:40,off:.09,perfect:.12,good:.26,swap:.45,bed:'squat120_bed',bgm:'squat120_bgm',bgmg:1},
- {bpm:150,sp:4,dur:50,off:.05,perfect:.105,good:.22,swap:.60,bed:'squat150_bed',bgm:'squat150_bgm',bgmg:1}
+ {bpm:90,sp:2,dur:30,off:.19,perfect:.11,good:.30,swap:.30,bed:'squat90_bed',bgm:'squat90_bgm',bgmg:3.3},
+ {bpm:120,sp:3,dur:40,off:.09,perfect:.12,good:.26,swap:.45,bed:'squat120_bed',bgm:'squat120_bgm',bgmg:3},
+ {bpm:150,sp:4,dur:50,off:.05,perfect:.105,good:.22,swap:.60,bed:'squat150_bed',bgm:'squat150_bgm',bgmg:2.6}
 ];
 /* ※ 임시 대사(수위 보통). 케인 님이 더 센 원문을 HARD_M(남자 심사위원→스쿼트) / HARD_F(여자 심사위원→패들)에 붙여 넣으면 같이 섞입니다. */
 const LINES_M=['이게 영화냐, 이 미친 새끼들아!','존나 한심하네. 앉아, 앉으라고!','돈 아깝다, 이 병신들아!','개판이야! 더 낮게 앉아!','눈 뜨고 못 보겠네, 씨발.','연기가 그게 뭐냐, 병신아!','박자 맞춰 앉아, 이 새끼야!','허리를 써, 허리를! 미쳤냐?'];
