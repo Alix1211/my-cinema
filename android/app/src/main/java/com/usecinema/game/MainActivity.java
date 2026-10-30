@@ -95,7 +95,7 @@ public final class MainActivity extends Activity {
         });
         game.addJavascriptInterface(new Bridge(), "CinemaBridge");
         setContentView(game);
-        game.loadUrl(REMOTE + "index.html");
+        game.loadUrl(REMOTE + "index.html?t=" + System.currentTimeMillis());   // 켤 때마다 새 주소로 받아 옛 화면이 남지 않게
         ui.postDelayed(() -> { if (!remoteOk) loadLocal(); }, 15000);   // 15초 안에 못 받으면 앱 안의 게임으로
     }
 
