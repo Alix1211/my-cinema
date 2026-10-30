@@ -39,7 +39,11 @@ public final class MainActivity extends Activity {
     private static final String REMOTE = "https://alix1211.github.io/my-cinema/";
     private static final String LOCAL = "https://appassets.androidplatform.net/assets/index.html";
     private boolean usingLocal = false, remoteOk = false;
-    private void loadLocal() { if (usingLocal) return; usingLocal = true; if (game != null) game.loadUrl(LOCAL); }
+    private void loadLocal(String why) {
+        if (usingLocal) return; usingLocal = true;
+        Toast.makeText(this, "인터넷판을 못 받아 내장판으로 엽니다 (" + why + ")", Toast.LENGTH_LONG).show();
+        if (game != null) game.loadUrl(LOCAL);
+    }
     private static final String MEDIA = "https://appassets.androidplatform.net/media/";
     private static final int REQ_TREE = 601;
 
@@ -79,10 +83,12 @@ public final class MainActivity extends Activity {
                 return loader.shouldInterceptRequest(u);
             }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, android.webkit.WebResourceError e) {
-                if (r.isForMainFrame() && !usingLocal) ui.post(MainActivity.this::loadLocal);
+                final String why = "연결 오류 " + e.getErrorCode() + " " + e.getDescription();
+                if (r.isForMainFrame() && !usingLocal) ui.post(() -> loadLocal(why));
             }
             @Override public void onReceivedHttpError(WebView v, WebResourceRequest r, WebResourceResponse e) {
-                if (r.isForMainFrame() && !usingLocal) ui.post(MainActivity.this::loadLocal);
+                final String why = "서버 응답 " + e.getStatusCode();
+                if (r.isForMainFrame() && !usingLocal) ui.post(() -> loadLocal(why));
             }
             @Override public void onPageFinished(WebView v, String url) {
                 if (url != null && url.startsWith(REMOTE)) remoteOk = true;
@@ -93,10 +99,16 @@ public final class MainActivity extends Activity {
                 return true;
             }
         });
+        game.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override public void onProgressChanged(WebView v, int p) {   // 화면이 6할 이상 열리면 인터넷판으로 확정(그림 내려받느라 늦어도 내장판으로 안 바꿈)
+                String u = v.getUrl();
+                if (p >= 60 && !usingLocal && u != null && u.startsWith(REMOTE)) remoteOk = true;
+            }
+        });
         game.addJavascriptInterface(new Bridge(), "CinemaBridge");
         setContentView(game);
         game.loadUrl(REMOTE + "index.html?t=" + System.currentTimeMillis());   // 켤 때마다 새 주소로 받아 옛 화면이 남지 않게
-        ui.postDelayed(() -> { if (!remoteOk) loadLocal(); }, 15000);   // 15초 안에 못 받으면 앱 안의 게임으로
+        ui.postDelayed(() -> { if (!remoteOk) loadLocal("30초 안에 안 열림"); }, 30000);   // 30초 안에 못 받으면 앱 안의 게임으로
     }
 
     private void hideBars() {
