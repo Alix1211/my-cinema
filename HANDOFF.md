@@ -14,6 +14,7 @@
 ## 1. 구성
 - 게임 = 단일 파일 HTML. 아티팩트 `https://claude.ai/artifact/AQWbf6n6TKYvzvvdrWghPx`(같은 주소에 덮어쓰기, 현재 v14 안팎). 작업본: 세션 스크래치패드 `cinema/use-cinema.html`(= 저장소 `web/index.html`). 그림은 `a/*.webp|svg`.
 - 저장소: `https://github.com/Alix1211/my-cinema` (현재 공개, **케인이 나중에 비공개로 바꿀 예정** — 성인용품 그림 포함). 구조: `web/`(게임), `android/`(WebView 앱), `.github/workflows/build.yml`.
+- **인터넷 권한(2026-10-30 발견·수정)**: 앱 매니페스트에 INTERNET 권한이 없어 인터넷판이 한 번도 안 열리고 계속 내장판(net::ERR_CACHE_MISS)이었음 → 권한 추가. 내장판이면 오른쪽 아래에 '내장판 · 이유'가 표시됨. 인터넷판이면 '인터넷판 커밋7자리'.
 - 배포: push → Actions `web` 잡이 GitHub Pages(`https://alix1211.github.io/my-cinema/`) 배포. `apk` 잡은 `android/**` 변경 또는 수동 실행 때만 빌드 → 릴리스 태그 `app-latest`의 `cinema.apk`. Pages는 케인이 Source=GitHub Actions로 켜 둠. Pages 캐시 최대 약 10분.
 - 수동 APK 빌드: `gh api -X POST repos/Alix1211/my-cinema/actions/workflows/400324115/dispatches -f ref=main` (gh 일반 명령은 GraphQL 차단으로 실패 → REST만). 받기: `gh api -H "Accept: application/octet-stream" repos/Alix1211/my-cinema/releases/assets/<id>`. **익명 curl은 막힘** → 파일은 SendUserFile로 직접 전달.
 - 앱 서명키 `android/moonflo.keystore`(비번 moonflo123, alias moonflo), 앱은 인터넷판 우선, 실패 시 번들. 앱 저장은 `CinemaBridge.saveSave/loadSave` + localStorage.
