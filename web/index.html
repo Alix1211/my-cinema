@@ -919,7 +919,7 @@ const LINES_F=['감독이 병신이니까 이 꼴이지!','엉덩이 대! 책임
 const HARD_M=[],HARD_F=[];
 const isFem=j=>j.persona.f==='jf_1';
 const SQ={on:false};
-const VOL=(()=>{let v={mus:.7,sfx:1};try{const j=JSON.parse(localStorage.getItem('use_vol')||'null');if(j){if(typeof j.mus==='number')v.mus=Math.min(1,Math.max(0,j.mus));if(typeof j.sfx==='number')v.sfx=Math.min(1,Math.max(0,j.sfx));}}catch(e){}return v;})();
+const VOL=(()=>{let v={mus:.7,sfx:1,lag:100};try{const j=JSON.parse(localStorage.getItem('use_vol')||'null');if(j){if(typeof j.mus==='number')v.mus=Math.min(1,Math.max(0,j.mus));if(typeof j.sfx==='number')v.sfx=Math.min(1,Math.max(0,j.sfx));if(typeof j.lag==='number')v.lag=Math.min(300,Math.max(0,j.lag));}}catch(e){}return v;})();
 const saveVol=()=>{try{localStorage.setItem('use_vol',JSON.stringify(VOL));}catch(e){}};
 const acx=()=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();}catch(e){}return AC;};
 const SNDBUF={};
@@ -1001,7 +1001,7 @@ function sqTap(side){
  }
  const f=$(side==='L'?'#figD':'#figR');if(f){f.classList.add('tapfx');setTimeout(()=>f.classList.remove('tapfx'),120);}
  if(side==='R'){
-  if(q==='late'||q==='wrong')setTimeout(squatAnim,230);else squatAnim();
+  if(q==='late'||q==='wrong')setTimeout(squatAnim,230);else if(VOL.lag>0)setTimeout(squatAnim,VOL.lag);else squatAnim();
   if(q==='perfect'||q==='good')playBuf('perfect_0'+rnd(1,7),q==='perfect'?.9:.6);
  }
 }
@@ -1269,10 +1269,11 @@ setTimeout(function setupSound(){try{
  document.head.appendChild(st);
  const g=document.createElement('button');g.id='gear';g.type='button';g.setAttribute('aria-label','설정');g.textContent='⚙';document.body.appendChild(g);
  const p=document.createElement('div');p.id='setp';
- p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><button type="button" id="rc">닫기</button></div>';
+ p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><label>스쿼트 동작 늦추기 <span class="v" id="vl"></span></label><input type="range" id="rl" min="0" max="300" step="10"><div style="font-size:12px;color:#c9b88a;margin-top:4px">소리가 동작보다 늦게 들리면 올리세요.</div><button type="button" id="rc">닫기</button></div>';
  document.body.appendChild(p);
- const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs');
- const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';};
+ const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs'),rl=p.querySelector('#rl'),vl=p.querySelector('#vl');
+ const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';rl.value=VOL.lag;vl.textContent=VOL.lag+'ms';};
+ rl.oninput=()=>{VOL.lag=+rl.value;vl.textContent=VOL.lag+'ms';saveVol();};
  rm.oninput=()=>{VOL.mus=rm.value/100;vm.textContent=rm.value+'%';saveVol();applyVol();};
  rs.oninput=()=>{VOL.sfx=rs.value/100;vs.textContent=rs.value+'%';saveVol();};
  rs.onchange=()=>{try{acx();loadSnd('hit_punch').then(()=>playBuf('hit_punch',.9));}catch(e){}};
