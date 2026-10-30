@@ -246,7 +246,7 @@ border-style:solid;border-width:11px;border-image:url(a/plate_08.webp) 26 fill/1
 .fig{position:absolute;bottom:2%;width:23%;aspect-ratio:360/563}
 .fig.fl{left:2.5%}.fig.fr{right:2.5%}
 .fig>#imgD,.fig>#imgR{position:absolute;inset:0;width:100%;height:100%;z-index:1}
-.fig>.ball{position:absolute;bottom:1.5%;left:40.6%;width:18%;z-index:0}
+.fig>.ball{position:absolute;bottom:1.5%;left:calc(40.6% + 2px);width:18%;z-index:0}
 .fig>.padi{position:absolute;left:60%;top:28%;width:17%;z-index:2;opacity:0;transform-origin:50% 92%;pointer-events:none}
 .fig>.padi.go{animation:swingP .32s ease-in forwards}
 @keyframes swingP{0%{opacity:1;transform:rotate(70deg)}55%{opacity:1;transform:rotate(-38deg)}100%{opacity:0;transform:rotate(-30deg)}}
@@ -323,6 +323,19 @@ border-style:solid;border-width:11px;border-image:url(a/plate_08.webp) 26 fill/1
 .pbub{left:58.8%;top:71%;width:23%;min-height:0;height:27%}
 .pbub.off{visibility:hidden}
 .pbub::after{left:-1.7cqw;bottom:auto;top:38%;border:.9cqw solid transparent;border-right:1.8cqw solid #d9b25f;border-left:0}
+.bgx{position:absolute;inset:0;width:100%;height:100%;z-index:0;filter:brightness(.8);pointer-events:none}
+.pil{display:none}
+.hrt{position:absolute;left:50%;top:50%;width:9cqw;height:8.1cqw;margin-left:-4.5cqw;z-index:8;pointer-events:none;--hc:#ff7fb8;opacity:0;transition:opacity .2s}
+.hrt.on{opacity:1}.hrt.L{--hc:#ff7fb8}.hrt.R{--hc:#b58cff}
+.hrt svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hrt path{stroke:var(--hc);stroke-linejoin:round;fill:none}
+.hrt .ht{filter:blur(.2cqw) drop-shadow(0 0 .9cqw var(--hc))}.hrt .ht path{stroke-width:4;stroke-opacity:.85}
+.hrt .hm{transform-origin:50% 52%;opacity:0;filter:drop-shadow(0 0 .7cqw var(--hc))}.hrt .hm path{stroke-width:3.2;fill:var(--hc);fill-opacity:.14}
+.hrt .hb{opacity:0;transform-origin:50% 52%}.hrt .hb path{fill:var(--hc);fill-opacity:.55;stroke:#fff;stroke-width:2.5}
+.hrt.bp .hb{animation:hburst .5s ease-out}.hrt.bg .hb{animation:hburst .3s ease-out;filter:saturate(.5)}
+.hrt.bm .ht{animation:hmiss .32s linear}
+@keyframes hburst{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(2.3)}}
+@keyframes hmiss{0%,100%{transform:translateX(0);opacity:1}20%{transform:translateX(-.7cqw);opacity:.35}45%{transform:translateX(.7cqw);opacity:.6}70%{transform:translateX(-.4cqw);opacity:.35}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @media (max-width:400px){.ttl h1{font-size:30px}}
 </style>
@@ -909,13 +922,13 @@ function stageHTML(){
  const busts=F.judges.map(j=>`<div class="bj" data-seat="${j.seat}"><img src="${IM(j.persona.f)}" alt=""></div>`).join('');
  const dr=q=>`<div class="dr2 ${q}"><img class="c0" src="${IM('c'+q+'0')}" alt=""><img class="c1" src="${IM('c'+q+'1')}" alt=""><img class="c2" src="${IM('c'+q+'2')}" alt=""></div>`;
  return `<div class="land" id="land"><div class="stg" id="stg">
- <div class="pil pl"></div><div class="pil pr"></div>
+ <img class="bgx" src="a/bg_stage.webp" alt="">
  <div class="win2 off" id="screen"><div class="scr-in" id="scrIn"></div></div>
  ${dr('l')}${dr('r')}
  <img class="valx" src="${IM('val')}" alt=""><img class="basx" src="${IM('base')}" alt="">
  <div class="fig fl" id="figD"><img id="imgD" src="${IM('dp_wait')}" alt=""><img class="padi" id="pad" src="a/t_padb.webp" alt=""><span class="nm2">감독</span></div>
  <div class="fig fr" id="figR"><img class="ball" src="${IM('ball')}" alt=""><img id="imgR" src="${IM('sq_f01')}" alt=""><span class="nm2">로지로프</span></div>
- <div class="mtr" id="meter"><i class="mt"></i><i class="dot" id="dot"></i></div>
+ <div class="hrt" id="hrt"><svg class="ht" viewBox="0 0 100 90"><path d="M50 85C12 56 2 36 2 23C2 10 12 3 25 3C36 3 46 9 50 19C54 9 64 3 75 3C88 3 98 10 98 23C98 36 88 56 50 85Z"/></svg><svg class="hb" viewBox="0 0 100 90"><path d="M50 85C12 56 2 36 2 23C2 10 12 3 25 3C36 3 46 9 50 19C54 9 64 3 75 3C88 3 98 10 98 23C98 36 88 56 50 85Z"/></svg><svg class="hm" id="hm" viewBox="0 0 100 90"><path d="M50 85C12 56 2 36 2 23C2 10 12 3 25 3C36 3 46 9 50 19C54 9 64 3 75 3C88 3 98 10 98 23C98 36 88 56 50 85Z"/></svg></div>
  <div class="pfr" id="pfr"><img id="pface" src="${IM(F.judges[0].persona.f)}" alt="" style="visibility:hidden"></div>
  <div class="pbub ml off" id="bub"><small id="bubN"></small><span id="bubT"></span></div>
  <div class="hint hl" id="hintL">◀ 패들</div><div class="hint hr" id="hintR">스쿼트 ▶</div>
@@ -947,6 +960,7 @@ function paddleAnim(strong){
 function verdict(c,q){
  const lab=q==='perfect'?['PERFECT!','perfect']:q==='good'?['GOOD','good']:['MISS','miss'];
  fxText(c.side,lab[0],lab[1]);
+ {const h=$('#hrt');if(h){h.classList.remove('bp','bg','bm');void h.offsetWidth;h.classList.add(q==='perfect'?'bp':q==='good'?'bg':'bm');}}
  if(q==='miss'||q==='late'||q==='wrong'){
   const fr=spk();if(fr){fr.classList.remove('shk');void fr.offsetWidth;fr.classList.add('shk');}
   if(c.side==='L'){paddleAnim(true);fxImg('L','fx_ouch');}
@@ -975,7 +989,7 @@ function showCrit(c){
  const j=c.j;
  $('#bubN').textContent=j.persona.name;$('#bubT').textContent=c.line;
  const b=$('#bub');b.className='pbub '+(c.side==='L'?'fm':'ml');void b.offsetWidth;b.classList.add('pop');
- $('#dot').className='dot on '+c.side;
+ {const h=$('#hrt');if(h)h.className='hrt on '+c.side;}
  $('#hintL').classList.toggle('on',c.side==='L');$('#hintR').classList.toggle('on',c.side==='R');
  const pf=$('#pface');if(pf){pf.src=IM(j.persona.f);pf.style.visibility='visible';pf.classList.remove('up');void pf.offsetWidth;pf.classList.add('up');}
 }
@@ -991,8 +1005,8 @@ function sqLoop(){
   if(c.shown&&c.side==='L'&&!c.swung&&t>=c.target){c.swung=true;paddleAnim(false);}
   if(!c.done&&t>c.target+rule.good){c.done=true;c.q='miss';c.sc=0;verdict(c,'miss');}
  }
- const act=SQ.plan.find(x=>x.shown&&t<=x.target+rule.good+.12),dot=$('#dot');
- if(dot){if(act)dot.style.left=(50+50*clamp((act.target-t)/(SQ.sp*P),-.25,1))+'%';else dot.classList.remove('on');}
+ const act=SQ.plan.find(x=>x.shown&&!x.done&&t<=x.target+rule.good+.12),hm=$('#hm');
+ if(hm){if(act){const r=clamp((act.target-t)/(SQ.sp*P),-.25,1);hm.style.transform='scale('+(1+1.3*r).toFixed(3)+')';hm.style.opacity=(r>=0?clamp((1-r)*6,0,1):clamp(1+r*3,0,1)).toFixed(2);}else hm.style.opacity=0;}
  if(t>SQ.endT){sqEnd();return;}
  requestAnimationFrame(sqLoop);
 }
