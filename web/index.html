@@ -1289,7 +1289,7 @@ setTimeout(function setupSound(){try{
 setTimeout(function verStamp(){try{
  const host=location.host,d=document.createElement('div');
  d.style.cssText='position:fixed;right:6px;bottom:2px;font:10px sans-serif;color:#ffffff66;z-index:1;pointer-events:none';
- if(/androidplatform/.test(host))d.textContent='내장판';
+ if(/androidplatform/.test(host)){let w='';try{w=decodeURIComponent((location.hash||'').slice(1));}catch(e){}d.textContent='내장판'+(w?' · '+w:'');d.style.maxWidth='80vw';d.style.textAlign='right';d.style.color='#ffffffaa';}
  else if(/github\.io$/.test(host)){d.textContent='인터넷판';fetch('version.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{d.textContent='인터넷판 '+t.trim().slice(0,7);}).catch(()=>{});}
  else return;
  document.body.appendChild(d);}catch(e){}},0);

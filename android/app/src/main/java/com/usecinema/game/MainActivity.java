@@ -42,7 +42,7 @@ public final class MainActivity extends Activity {
     private void loadLocal(String why) {
         if (usingLocal) return; usingLocal = true;
         Toast.makeText(this, "인터넷판을 못 받아 내장판으로 엽니다 (" + why + ")", Toast.LENGTH_LONG).show();
-        if (game != null) game.loadUrl(LOCAL);
+        if (game != null) game.loadUrl(LOCAL + "#" + Uri.encode(why));
     }
     private static final String MEDIA = "https://appassets.androidplatform.net/media/";
     private static final int REQ_TREE = 601;
@@ -84,6 +84,7 @@ public final class MainActivity extends Activity {
             }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, android.webkit.WebResourceError e) {
                 final String why = "연결 오류 " + e.getErrorCode() + " " + e.getDescription();
+                if (e.getErrorCode() == -3) return;   // 중간 취소(ERR_ABORTED)는 실패가 아님
                 if (r.isForMainFrame() && !usingLocal) ui.post(() -> loadLocal(why));
             }
             @Override public void onReceivedHttpError(WebView v, WebResourceRequest r, WebResourceResponse e) {
