@@ -969,14 +969,14 @@ function squatAnim(){
  };
  step();
 }
-function paddleAnim(strong){
+function paddleAnim(strong,quiet){
  const im=$('#imgD'),pad=$('#pad'),f=$('#figD');if(!im||!pad||!f)return;
  const id=++SQ.hid;
  pad.classList.remove('go');void pad.offsetWidth;pad.classList.add('go');
  f.classList.remove('shk','shk2');void f.offsetWidth;f.classList.add(strong?'shk2':'shk');
  setTimeout(()=>{if(SQ.hid===id&&$('#imgD'))im.src=IM('dp_hit');},110);
  setTimeout(()=>{if(SQ.hid===id&&$('#imgD'))im.src=IM('dp_wait');},strong?950:600);
- fxImg('L','fx_slap');playBuf('hit_punch',.9);vib(strong?[0,170]:90);
+ fxImg('L','fx_slap');if(!quiet)playBuf('hit_punch',.9);vib(strong?[0,170]:90);
 }
 function verdict(c,q){
  const lab=q==='perfect'?['PERFECT!','perfect']:q==='good'?['GOOD','good']:['MISS','miss'];
@@ -997,12 +997,13 @@ function sqTap(side){
   const d=Math.abs(t-c.target);
   q=side!==c.side?'wrong':d<=rule.perfect?'perfect':d<=rule.good?'good':'late';
   c.done=true;c.q=q;c.sc=q==='perfect'?1:q==='good'?.6:0;
+  if(side==='R'&&(q==='perfect'||q==='good'))playBuf('perfect_0'+rnd(1,7),q==='perfect'?.9:.6);
   verdict(c,q==='late'||q==='wrong'?'miss':q);
  }
  const f=$(side==='L'?'#figD':'#figR');if(f){f.classList.add('tapfx');setTimeout(()=>f.classList.remove('tapfx'),120);}
  if(side==='R'){
   if(q==='late'||q==='wrong')setTimeout(squatAnim,230);else if(VOL.lag>0)setTimeout(squatAnim,VOL.lag);else squatAnim();
-  if(q==='perfect'||q==='good')playBuf('perfect_0'+rnd(1,7),q==='perfect'?.9:.6);
+
  }
 }
 const spk=()=>document.getElementById('pfr');
@@ -1023,7 +1024,8 @@ function sqLoop(){
  if(t>=0){const ci=Math.min(SQ.cuts.length-1,Math.floor(t/SQ.cutPer));if(ci!==SQ.ci){SQ.ci=ci;panCut(SQ.cuts[ci],ci,SQ.cutPer*1000);}}
  for(const c of SQ.plan){
   if(!c.shown&&t>=c.showAt){c.shown=true;showCrit(c);}
-  if(c.shown&&c.side==='L'&&!c.swung&&t>=c.target){c.swung=true;paddleAnim(false);}
+  if(c.shown&&c.side==='L'&&!c.snd&&t>=c.target-VOL.lag/1000){c.snd=true;playBuf('hit_punch',.9);}
+  if(c.shown&&c.side==='L'&&!c.swung&&t>=c.target){c.swung=true;paddleAnim(false,true);}
   if(!c.done&&t>c.target+rule.good){c.done=true;c.q='miss';c.sc=0;verdict(c,'miss');}
  }
  const act=SQ.plan.find(x=>x.shown&&!x.done&&t<=x.target+rule.good+.12),hm=$('#hm');
@@ -1071,7 +1073,7 @@ async function runShow(){
  const when=(AC?AC.currentTime:0)+.25;stopAudio();const srcs=[],gl=[];
  let MIX=AC?AC.destination:null;if(AC){try{const c=AC.createDynamicsCompressor();c.threshold.value=-8;c.knee.value=8;c.ratio.value=10;c.attack.value=.003;c.release.value=.15;c.connect(AC.destination);MIX=c;}catch(e){MIX=AC.destination;}}
  if(AC)for(const [nm,vol] of [[rule.bed,rule.bedg],[rule.bgm,rule.bgmg]]){const b=SNDBUF[nm];if(!b)continue;try{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g._b=vol;g.gain.value=vol*VOL.mus*1.07;gl.push(g);s.connect(g).connect(MIX);s.start(when);srcs.push(s);}catch(e){}}
- Object.assign(SQ,{on:true,tok,T0:performance.now()+250,per:P,sp,rule,plan,cuts,cutPer,endT,srcs,gl,aid:0,hid:0,view:'f',lastBeat:-1,ci:-1});
+ Object.assign(SQ,{on:true,tok,T0:performance.now()+250+VOL.lag,per:P,sp,rule,plan,cuts,cutPer,endT,srcs,gl,aid:0,hid:0,view:'f',lastBeat:-1,ci:-1});
  R.sq=SQ;
  for(const [id,sd] of [['#tzL','L'],['#tzR','R']]){const e=$(id);if(e)e.addEventListener('pointerdown',ev=>{ev.preventDefault();sqTap(sd);});}
  const scr=$('#screen');if(scr){scr.classList.remove('off');scr.classList.add('on');}
@@ -1269,7 +1271,7 @@ setTimeout(function setupSound(){try{
  document.head.appendChild(st);
  const g=document.createElement('button');g.id='gear';g.type='button';g.setAttribute('aria-label','설정');g.textContent='⚙';document.body.appendChild(g);
  const p=document.createElement('div');p.id='setp';
- p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><label>스쿼트 동작 늦추기 <span class="v" id="vl"></span></label><input type="range" id="rl" min="0" max="300" step="10"><div style="font-size:12px;color:#c9b88a;margin-top:4px">소리가 동작보다 늦게 들리면 올리세요.</div><button type="button" id="rc">닫기</button></div>';
+ p.innerHTML='<div class="bx"><h3>소리 설정</h3><label>음악 <span class="v" id="vm"></span></label><input type="range" id="rm" min="0" max="100" step="1"><label>효과음 <span class="v" id="vs"></span></label><input type="range" id="rs" min="0" max="100" step="1"><label>소리 맞추기 <span class="v" id="vl"></span></label><input type="range" id="rl" min="0" max="300" step="10"><div style="font-size:12px;color:#c9b88a;margin-top:4px">소리·박자가 화면보다 늦게 들리면 올리세요.</div><button type="button" id="rc">닫기</button></div>';
  document.body.appendChild(p);
  const rm=p.querySelector('#rm'),rs=p.querySelector('#rs'),vm=p.querySelector('#vm'),vs=p.querySelector('#vs'),rl=p.querySelector('#rl'),vl=p.querySelector('#vl');
  const sync=()=>{rm.value=Math.round(VOL.mus*100);rs.value=Math.round(VOL.sfx*100);vm.textContent=rm.value+'%';vs.textContent=rs.value+'%';rl.value=VOL.lag;vl.textContent=VOL.lag+'ms';};
